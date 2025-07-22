@@ -14,7 +14,7 @@
 db.sqlite
 
 # next.js
-/.next/
+**/.next/
 /out/
 next-env.d.ts
 
@@ -44,3 +44,5 @@ yarn-error.log*
 
 # idea files
 .idea
+
+.turbo

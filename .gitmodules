@@ -1,0 +1,3 @@
+[submodule "packages/sandbox-client"]
+	path = packages/sandbox-client
+	url = git@github.com:codesandbox/codesandbox-client.git
