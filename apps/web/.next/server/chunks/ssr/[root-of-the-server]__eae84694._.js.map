@@ -1,0 +1,8 @@
+{
+  "version": 3,
+  "sources": [],
+  "sections": [
+    {"offset": {"line": 5, "column": 0}, "map": {"version":3,"sources":[],"names":[],"mappings":"","debugId":null}},
+    {"offset": {"line": 14, "column": 0}, "map": {"version":3,"sources":["file:///Users/jloka/Documents/repos/personal/shared-workshop/src/app/SandpackEditor.tsx"],"sourcesContent":["import { Sandpack } from \"@codesandbox/sandpack-react\";\n\nexport function SandpackEditor() {\n  return <Sandpack />;\n}\n"],"names":[],"mappings":";;;;AAAA;;;AAEO,SAAS;IACd,qBAAO,6WAAC,iUAAA,CAAA,WAAQ;;;;;AAClB","debugId":null}},
+    {"offset": {"line": 32, "column": 0}, "map": {"version":3,"sources":["file:///Users/jloka/Documents/repos/personal/shared-workshop/src/app/page.tsx"],"sourcesContent":["import { MonacoEditor } from \"./MonacoEditor\";\nimport { SandpackEditor } from \"./SandpackEditor\";\n\nexport default function HomePage() {\n  return (\n    <main className=\"flex min-h-screen flex-col items-center justify-center bg-gradient-to-b from-[#18181b] to-[#1b1b1c] text-white\">\n      <div className=\"container grid grow grid-cols-1 gap-4 p-4\">\n        <SandpackEditor />\n        {/* <div className=\"bg-zinc-900\">preview</div> */}\n      </div>\n    </main>\n  );\n}\n"],"names":[],"mappings":";;;;AACA;;;AAEe,SAAS;IACtB,qBACE,6WAAC;QAAK,WAAU;kBACd,cAAA,6WAAC;YAAI,WAAU;sBACb,cAAA,6WAAC,6HAAA,CAAA,iBAAc;;;;;;;;;;;;;;;AAKvB","debugId":null}}]
+}

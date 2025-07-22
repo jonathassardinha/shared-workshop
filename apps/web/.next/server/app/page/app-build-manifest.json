@@ -1,0 +1,26 @@
+{
+  "pages": {
+    "/page": [
+      "static/chunks/[root-of-the-server]__698e6b9e._.css",
+      "static/chunks/09eae_next_dist_24df4b14._.js",
+      "static/chunks/src_app_layout_tsx_a30e9579._.js",
+      "static/chunks/09eae_next_dist_client_components_builtin_global-error_d9d78fb9.js",
+      "static/chunks/26d8f_@codesandbox_sandpack-client_dist_2895abb6._.js",
+      "static/chunks/cd2fa_@codemirror_state_dist_index_8f5b2002.js",
+      "static/chunks/c6d3a_@codemirror_view_dist_index_fcb56616.js",
+      "static/chunks/7fac6_@codemirror_language_dist_index_d3e4bc39.js",
+      "static/chunks/0e0c9_@codesandbox_sandpack-react_dist_index_mjs_74ca11a2._.js",
+      "static/chunks/node_modules__pnpm_2d48d543._.js",
+      "static/chunks/src_app_page_tsx_d9d78fb9._.js",
+      "static/chunks/[turbopack]_browser_dev_hmr-client_hmr-client_ts_038c4062._.js",
+      "static/chunks/09eae_next_dist_compiled_react-dom_d8fe44ba._.js",
+      "static/chunks/09eae_next_dist_compiled_next-devtools_index_916fe0c7.js",
+      "static/chunks/09eae_next_dist_compiled_b08ee47b._.js",
+      "static/chunks/09eae_next_dist_client_2e537b35._.js",
+      "static/chunks/09eae_next_dist_abfa7500._.js",
+      "static/chunks/61dca_@swc_helpers_cjs_28edb73c._.js",
+      "static/chunks/_e69f0d32._.js",
+      "static/chunks/_bf225ee7._.js"
+    ]
+  }
+}

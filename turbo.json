@@ -1,0 +1,22 @@
+{
+  "$schema": "https://turborepo.com/schema.json",
+  "globalEnv": ["AUTH_SECRET", "DATABASE_URL"],
+  "tasks": {
+    "build": {
+      "dependsOn": ["^build"],
+      "outputs": [".next/**", "!.next/cache/**", "dist/**"]
+    },
+    "check": {
+      "dependsOn": ["^check"]
+    },
+    "dev": {
+      "persistent": true,
+      "cache": false,
+      "inputs": ["$TURBO_DEFAULT$", ".env.local"]
+    },
+    "lint": {
+      "dependsOn": ["^lint"],
+      "cache": false
+    }
+  }
+}
