@@ -1,6 +1,0 @@
-
-
-> web@0.1.0 check /Users/jloka/Documents/repos/personal/shared-workshop/apps/web
-> next lint && tsc --noEmit
-
-[32m✔ No ESLint warnings or errors[39m

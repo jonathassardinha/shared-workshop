@@ -23,6 +23,13 @@ export default tseslint.config(
   ...turboConfig,
   ...tailwind.configs["flat/recommended"],
   {
+    settings: {
+      tailwindcss: {
+        config: "",
+      },
+    },
+  },
+  {
     plugins: { import: importPlugin },
     rules: {
       "import/order": [

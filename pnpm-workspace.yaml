@@ -6,6 +6,3 @@ onlyBuiltDependencies:
   - prisma
   - sharp
   - unrs-resolver
-packages:
-  - "apps/*"
-  - "packages/*"

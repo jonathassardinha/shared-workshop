@@ -22,7 +22,7 @@ export default function RootLayout({
 }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="en" className={`${geist.variable}`}>
-      <body>
+      <body suppressHydrationWarning={process.env.NODE_ENV === "production"}>
         <JotaiProvider>
           <JotaiHydrator
             envVars={{

@@ -13,17 +13,20 @@
       "dependsOn": ["^build"],
       "outputs": [".next/**", "!.next/cache/**", "dist/**"]
     },
-    "check": {
-      "dependsOn": ["^check"]
-    },
     "dev": {
       "persistent": true,
       "cache": false,
       "inputs": ["$TURBO_DEFAULT$", ".env.local"]
     },
-    "lint": {
-      "dependsOn": ["^lint"],
+    "check:lint": {
+      "dependsOn": ["^check:lint"],
       "cache": false
+    },
+    "check:types": {
+      "dependsOn": ["^check:types"]
+    },
+    "check:format": {
+      "dependsOn": ["^check:format"]
     }
   }
 }
