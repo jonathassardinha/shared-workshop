@@ -2,6 +2,9 @@ import "@/styles/globals.css";
 
 import { type Metadata } from "next";
 import { Geist } from "next/font/google";
+import { Provider as JotaiProvider } from "jotai";
+import { JotaiHydrator } from "@/lib/jotai/JotaiHydrator";
+import { env } from "@/env";
 
 export const metadata: Metadata = {
   title: "Create T3 App",
@@ -19,7 +22,21 @@ export default function RootLayout({
 }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="en" className={`${geist.variable}`}>
-      <body>{children}</body>
+      <body>
+        <JotaiProvider>
+          <JotaiHydrator
+            envVars={{
+              AUTH_SECRET: env.AUTH_SECRET,
+              DATABASE_URL: env.DATABASE_URL,
+              NODE_ENV: env.NODE_ENV,
+              REMOTE_LOGGER: env.REMOTE_LOGGER,
+              DEBUG_LOGGER: env.DEBUG_LOGGER,
+            }}
+          >
+            {children}
+          </JotaiHydrator>
+        </JotaiProvider>
+      </body>
     </html>
   );
 }
