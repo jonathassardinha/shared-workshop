@@ -45,6 +45,4 @@ yarn-error.log*
 # idea files
 .idea
 
-.turbo
-
-packages/codesandbox-client/client/
+.turbo/

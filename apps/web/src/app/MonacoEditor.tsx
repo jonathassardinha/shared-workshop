@@ -2,47 +2,88 @@
 
 import { Editor, type Monaco, type OnMount } from "@monaco-editor/react";
 import { useAtom } from "jotai";
-import { type editor, type ISelection } from "monaco-editor";
-import { useState } from "react";
-import { editorAtom } from "./client.utils";
+import { type editor } from "monaco-editor";
+import { useRef, useState } from "react";
+import { modelAtom, InitialModel } from "./client.utils";
+
+function loadReactTypes(monaco: Monaco) {
+  const loadTypes = async () => {
+    const files = [
+      "@types/react-dom/index.d.ts",
+      "@types/react-dom/client.d.ts",
+      "@types/react-dom/package.json",
+      "@types/react/index.d.ts",
+      "@types/react/global.d.ts",
+      "@types/react/jsx-runtime.d.ts",
+      "@types/react/package.json",
+    ];
+
+    const promises = files.map(
+      (file) =>
+        new Promise<{ response: Response; file: string }>((resolve, reject) => {
+          fetch(`https://unpkg.com/${file}`)
+            .then((response) => resolve({ response, file }))
+            .catch((err) =>
+              reject(
+                new Error("Error loading type declaration", { cause: err }),
+              ),
+            );
+        }),
+    );
+
+    const results = await Promise.all(promises);
+    for (const result of results) {
+      const typeDeclaration = await result.response.text();
+      monaco.languages.typescript.typescriptDefaults.addExtraLib(
+        typeDeclaration,
+        `file:///node_modules/${result.file}`,
+      );
+    }
+
+    console.info("React types loaded");
+  };
+
+  loadTypes().catch(console.error);
+}
+
+function addTsx(monaco: Monaco) {
+  monaco.languages.typescript.typescriptDefaults.setCompilerOptions({
+    target: monaco.languages.typescript.ScriptTarget.Latest,
+    lib: ["dom", "dom.iterable", "es6"],
+    allowJs: true,
+    skipLibCheck: true,
+    esModuleInterop: true,
+    allowSyntheticDefaultImports: true,
+    strict: true,
+    forceConsistentCasingInFileNames: true,
+    moduleResolution: monaco.languages.typescript.ModuleResolutionKind.NodeJs,
+    resolveJsonModule: true,
+    isolatedModules: true,
+    noEmit: true,
+    jsx: monaco.languages.typescript.JsxEmit.ReactJSX,
+  });
+}
 
 export function MonacoEditor() {
-  const [model, setModel] = useAtom(editorAtom);
-  const [selections, setSelections] = useState<ISelection[]>([
-    {
-      positionLineNumber: 1,
-      positionColumn: 1,
-      selectionStartLineNumber: 1,
-      selectionStartColumn: 1,
-    },
-  ]);
+  const [model, setModel] = useAtom(modelAtom);
+  const modelRef = useRef(InitialModel);
+
   const [editor, setEditor] = useState<editor.IStandaloneCodeEditor | null>(
     null,
   );
-  const [monaco, setMonaco] = useState<Monaco | null>(null);
 
   const updateEditor = () => {
-    if (model !== editor?.getValue()) {
-      editor?.setValue(model);
-    }
-
-    if (Array.isArray(selections)) {
-      if (
-        !monaco?.Selection.selectionsArrEqual(
-          selections,
-          editor?.getSelections() ?? [],
-        )
-      ) {
-        console.debug(selections, editor?.getSelections());
-        editor?.setSelections(selections);
-      }
+    if (modelRef.current !== editor?.getValue()) {
+      setModel(modelRef.current);
+      editor?.setValue(modelRef.current);
     }
   };
 
   const handleOnMount: OnMount = (mountedEditor, mountedMonaco) => {
     setEditor(mountedEditor);
-    setMonaco(mountedMonaco);
-    updateEditor();
+    loadReactTypes(mountedMonaco);
+
+    addTsx(mountedMonaco);
 
     mountedMonaco.editor.defineTheme("custom-theme", {
       base: "vs-dark",
@@ -54,16 +95,13 @@ export function MonacoEditor() {
     });
     mountedMonaco.editor.setTheme("custom-theme");
 
-    mountedEditor.onDidChangeCursorSelection((e) => {
-      setSelections([e.selection, ...e.secondarySelections]);
-      updateEditor();
-    });
+    updateEditor();
   };
 
   return (
     <Editor
       className="h-full w-full grow"
-      path="default.ts"
+      path="default.tsx"
       wrapperProps={{
         className: "w-full grow flex flex-col",
       }}
@@ -72,6 +110,7 @@ export function MonacoEditor() {
       value={model}
       theme="vs-dark"
       options={{
+        automaticLayout: true,
         minimap: {
           enabled: false,
         },
@@ -79,8 +118,8 @@ export function MonacoEditor() {
       }}
       onMount={handleOnMount}
       onChange={(value) => {
-        setModel(value ?? "");
-        setTimeout(() => updateEditor(), 0);
+        modelRef.current = value ?? "";
+        updateEditor();
       }}
     />
   );
