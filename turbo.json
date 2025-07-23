@@ -1,6 +1,11 @@
 {
   "$schema": "https://turborepo.com/schema.json",
-  "globalEnv": ["AUTH_SECRET", "DATABASE_URL"],
+  "globalEnv": [
+    "AUTH_SECRET",
+    "DATABASE_URL",
+    "NODE_ENV",
+    "SKIP_ENV_VALIDATION"
+  ],
   "tasks": {
     "build": {
       "dependsOn": ["^build"],
