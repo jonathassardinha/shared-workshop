@@ -1,12 +1,14 @@
 "use client";
 
+import type { Logger } from "@/lib/Logger/utils";
 import { Editor, type Monaco, type OnMount } from "@monaco-editor/react";
 import { useAtom } from "jotai";
 import { type editor } from "monaco-editor";
 import { useRef, useState } from "react";
+import { useClientLogger } from "@/lib/Logger/ClientLogger";
 import { modelAtom, InitialModel } from "./client.utils";
 
-function loadReactTypes(monaco: Monaco) {
+function loadReactTypes(monaco: Monaco, logger: Logger) {
   const loadTypes = async () => {
     const files = [
       "@types/react-dom/index.d.ts",
@@ -40,7 +42,7 @@ function loadReactTypes(monaco: Monaco) {
       );
     }
 
-    console.info("React types loaded");
+    logger.info("React types loaded");
   };
 
   loadTypes().catch(console.error);
@@ -67,6 +69,7 @@ function addTsx(monaco: Monaco) {
 export function MonacoEditor() {
   const [model, setModel] = useAtom(modelAtom);
   const modelRef = useRef(InitialModel);
+  const logger = useClientLogger();
 
   const [editor, setEditor] = useState<editor.IStandaloneCodeEditor | null>(
     null,
@@ -81,7 +84,7 @@ export function MonacoEditor() {
 
   const handleOnMount: OnMount = (mountedEditor, mountedMonaco) => {
     setEditor(mountedEditor);
-    loadReactTypes(mountedMonaco);
+    loadReactTypes(mountedMonaco, logger);
 
     addTsx(mountedMonaco);
 
