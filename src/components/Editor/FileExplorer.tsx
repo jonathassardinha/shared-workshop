@@ -1,14 +1,13 @@
 import { useSandpack } from "@codesandbox/sandpack-react";
 import { FaReact } from "react-icons/fa";
-import { useAtomValue } from "jotai";
-import { cn } from "@/lib/cn";
-import { filesAtom } from "./client.utils";
+import { cn } from "../../lib/cn";
+import { useEditor } from "./EditorProvider";
 
 export function FileExplorer() {
   const {
     sandpack: { activeFile, setActiveFile },
   } = useSandpack();
-  const files = useAtomValue(filesAtom);
+  const { files } = useEditor();
 
   const handleClick = (file: string) => {
     setActiveFile(file);

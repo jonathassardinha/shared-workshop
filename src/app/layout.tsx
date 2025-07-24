@@ -4,6 +4,7 @@ import { type Metadata } from "next";
 import { Geist } from "next/font/google";
 import { Provider as JotaiProvider } from "jotai";
 import { JotaiHydrator } from "@/lib/jotai/JotaiHydrator";
+import { Navigation } from "@/components/Navigation";
 import { env } from "@/env";
 
 export const metadata: Metadata = {
@@ -32,7 +33,10 @@ export default function RootLayout({
               DEBUG_LOGGER: env.DEBUG_LOGGER,
             }}
           >
-            {children}
+            <div className="min-h-screen bg-gradient-to-b from-[#18181b] to-[#1b1b1c]">
+              <Navigation />
+              {children}
+            </div>
           </JotaiHydrator>
         </JotaiProvider>
       </body>

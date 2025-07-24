@@ -1,11 +1,10 @@
 import { useActiveCode, useSandpack } from "@codesandbox/sandpack-react";
-import { useAtomValue } from "jotai";
-import { filesAtom } from "../../app/client.utils";
+import { useEditor } from "../Editor/EditorProvider";
 import { MonacoEditor } from "./BaseMonacoEditor";
 
 export function ControlledMonacoEditor() {
   const { code, updateCode } = useActiveCode();
-  const files = useAtomValue(filesAtom);
+  const { files } = useEditor();
   const { sandpack } = useSandpack();
 
   const handleChange = (newCode: string) => {
