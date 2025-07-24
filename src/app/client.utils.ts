@@ -1,15 +1,11 @@
 import type { ISelection } from "monaco-editor";
 import { atom } from "jotai";
 
-export const InitialModel = `interface Props {
-  name: string;
-}
-
-const MyComponent: React.FC<Props> = ({ name }) => {
-  return <div>Hello, {name}!</div>;
+export const InitialModel = `const App = () => {
+  return <div>Hello, World!</div>;
 };
 
-export default MyComponent;`;
+export default App;`;
 export const modelAtom = atom(InitialModel);
 
 export const InitialSelections: ISelection[] = [

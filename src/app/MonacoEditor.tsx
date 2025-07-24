@@ -2,11 +2,10 @@
 
 import type { Logger } from "@/lib/Logger/utils";
 import { Editor, type Monaco, type OnMount } from "@monaco-editor/react";
-import { useAtom } from "jotai";
 import { type editor } from "monaco-editor";
 import { useRef, useState } from "react";
 import { useClientLogger } from "@/lib/Logger/ClientLogger";
-import { modelAtom, InitialModel } from "./client.utils";
+import { InitialModel } from "./client.utils";
 
 function loadReactTypes(monaco: Monaco, logger: Logger) {
   const loadTypes = async () => {
@@ -66,8 +65,17 @@ function addTsx(monaco: Monaco) {
   });
 }
 
-export function MonacoEditor() {
-  const [model, setModel] = useAtom(modelAtom);
+export interface MonacoEditorProps {
+  model?: string;
+  onModelChange?: (newModel: string) => void;
+  defaultModel?: string;
+}
+
+export function MonacoEditor({
+  model,
+  onModelChange,
+  defaultModel,
+}: MonacoEditorProps) {
   const modelRef = useRef(InitialModel);
   const logger = useClientLogger();
 
@@ -76,10 +84,10 @@ export function MonacoEditor() {
   );
 
   const updateEditor = () => {
-    if (modelRef.current !== editor?.getValue()) {
-      setModel(modelRef.current);
+    if (modelRef.current !== editor?.getValue())
       editor?.setValue(modelRef.current);
-    }
+
+    if (modelRef.current !== model) onModelChange?.(modelRef.current);
   };
 
   const handleOnMount: OnMount = (mountedEditor, mountedMonaco) => {
@@ -98,18 +106,18 @@ export function MonacoEditor() {
     });
     mountedMonaco.editor.setTheme("custom-theme");
 
-    updateEditor();
+    setTimeout(() => updateEditor(), 1000);
   };
 
   return (
     <Editor
       className="h-full w-full grow"
-      path="default.tsx"
+      path="App.tsx"
       wrapperProps={{
         className: "w-full grow flex flex-col",
       }}
       language="typescript"
-      defaultValue={model}
+      defaultValue={defaultModel ?? model}
       value={model}
       theme="vs-dark"
       options={{

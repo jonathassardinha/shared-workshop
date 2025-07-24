@@ -24,7 +24,7 @@ export default tseslint.config(
   ...tailwind.configs["flat/recommended"],
   {
     settings: {
-      tailwindcss: {
+      "tailwindcss:base": {
         config: "",
       },
     },
