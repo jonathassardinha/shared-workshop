@@ -1,26 +1,27 @@
 import { useSandpack } from "@codesandbox/sandpack-react";
 import { FaReact } from "react-icons/fa";
+import { useAtomValue } from "jotai";
 import { cn } from "@/lib/cn";
-
-const files = ["App.tsx", "test.tsx", "veeeeeery-long-file-name.tsx"];
+import { filesAtom } from "./client.utils";
 
 export function FileExplorer() {
   const {
     sandpack: { activeFile, setActiveFile },
   } = useSandpack();
+  const files = useAtomValue(filesAtom);
 
   const handleClick = (file: string) => {
-    setActiveFile(`/${file}`);
+    setActiveFile(file);
   };
 
   return (
     <div className="flex shrink-0 basis-[150px] flex-col overflow-x-hidden">
-      {files.map((file) => (
+      {Object.keys(files).map((file) => (
         <button
           key={file}
           className={cn(
             "flex cursor-pointer items-center gap-1 px-2 py-2 hover:bg-zinc-800",
-            { "bg-gray-700 hover:bg-gray-700": activeFile === `/${file}` },
+            { "bg-gray-700 hover:bg-gray-700": activeFile === file },
           )}
           onClick={() => handleClick(file)}
         >

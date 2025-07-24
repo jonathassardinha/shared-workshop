@@ -1,11 +1,29 @@
 "use client";
 
-import { SandpackPreview, SandpackProvider } from "@codesandbox/sandpack-react";
-import { ControlledMonacoEditor } from "./ControlledMonacoEditor";
-import { InitialModel } from "./client.utils";
+import {
+  SandpackPreview,
+  SandpackProvider,
+  type SandpackFiles,
+} from "@codesandbox/sandpack-react";
+import { useMemo } from "react";
+import { ControlledMonacoEditor } from "../components/MonacoEditor/ControlledMonacoEditor";
+import { InitialFilesValue } from "./client.utils";
 import { FileExplorer } from "./FileExplorer";
 
 export function Sandbox() {
+  const defaultFiles: SandpackFiles = useMemo(() => {
+    return Object.entries(InitialFilesValue).reduce(
+      (acc, [key, value], index) => {
+        acc[key] = {
+          code: value.model,
+          active: index === 0,
+        };
+        return acc;
+      },
+      {} as SandpackFiles,
+    );
+  }, []);
+
   return (
     <div className="flex">
       <SandpackProvider
@@ -17,14 +35,7 @@ export function Sandbox() {
           flexDirection: "row",
         }}
         className="[&_>_*]:border [&_>_*]:border-r-0 [&_>_*]:border-gray-500 [&_>_*:last-child]:border-r"
-        files={{
-          "App.tsx": {
-            code: InitialModel,
-          },
-          "test.tsx": {
-            code: "console.log('teste')",
-          },
-        }}
+        files={defaultFiles}
       >
         <FileExplorer />
         <ControlledMonacoEditor />

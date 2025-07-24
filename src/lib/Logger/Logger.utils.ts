@@ -1,19 +1,17 @@
-import { env } from "@/env";
-
 export interface Logger {
-  info: (message: string) => void;
-  debug: (message: string) => void;
-  error: (message: string) => void;
+  info: (message: unknown) => void;
+  debug: (message: unknown) => void;
+  error: (message: unknown) => void;
 }
 
-export const BaseLogger: Logger = {
+export const getBaseLogger = (debugEnabled: boolean): Logger => ({
   // eslint-disable-next-line no-console
   info: (message) => console.info(message),
   debug: (message) => {
-    if (env.DEBUG_LOGGER) {
+    if (debugEnabled) {
       // eslint-disable-next-line no-console
       console.debug(message);
     }
   },
   error: (message) => console.error(message),
-};
+});

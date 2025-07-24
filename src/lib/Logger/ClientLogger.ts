@@ -1,15 +1,21 @@
 "use client";
 
 import { useAtomValue } from "jotai";
+import { useMemo } from "react";
 import { envVarsAtom } from "../jotai/atoms/common.atoms";
-import { BaseLogger } from "./utils";
+import { getBaseLogger } from "./Logger.utils";
 
 export function useClientLogger() {
-  const { REMOTE_LOGGER } = useAtomValue(envVarsAtom);
+  const envVars = useAtomValue(envVarsAtom);
 
-  if (REMOTE_LOGGER) {
-    return BaseLogger;
+  const baseLogger = useMemo(
+    () => getBaseLogger(envVars.DEBUG_LOGGER ?? false),
+    [envVars.DEBUG_LOGGER],
+  );
+
+  if (envVars.REMOTE_LOGGER) {
+    return baseLogger;
   } else {
-    return BaseLogger;
+    return baseLogger;
   }
 }

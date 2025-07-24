@@ -1,5 +1,7 @@
 import { env } from "@/env";
 import "server-only";
-import { BaseLogger } from "./utils";
+import { getBaseLogger } from "./Logger.utils";
 
-export const ServerLogger = env.REMOTE_LOGGER ? BaseLogger : BaseLogger;
+export const ServerLogger = env.REMOTE_LOGGER
+  ? getBaseLogger(env.DEBUG_LOGGER ?? false)
+  : getBaseLogger(env.DEBUG_LOGGER ?? false);
