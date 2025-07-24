@@ -27,7 +27,7 @@ export function FileExplorer() {
         >
           <FaReact className="size-4 shrink-0 text-blue-400" />
           <span className="truncate text-sm leading-none text-nowrap text-gray-300">
-            {file}
+            {file.replace(/\//, "")}
           </span>
         </button>
       ))}
