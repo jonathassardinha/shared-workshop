@@ -27,7 +27,12 @@ export function EditorLayout() {
     <div className="flex h-full">
       <SandpackProvider
         template="react-ts"
-        className="flex h-full w-full flex-row [&_>_*]:border [&_>_*]:border-r-0 [&_>_*]:border-gray-500 [&_>_*:last-child]:border-r"
+        style={{
+          display: "flex",
+          flexDirection: "row",
+          flexGrow: 1,
+        }}
+        className="flex w-full flex-row [&_>_*]:border [&_>_*]:border-r-0 [&_>_*]:border-gray-500 [&_>_*:last-child]:border-r"
         files={defaultFiles}
       >
         <FileExplorer />

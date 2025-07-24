@@ -1,6 +1,12 @@
 "use client";
 
-import { createContext, useContext, useMemo, type ReactNode } from "react";
+import {
+  createContext,
+  useContext,
+  useMemo,
+  useEffect,
+  type ReactNode,
+} from "react";
 import { atom, useAtom } from "jotai";
 
 export type EditorMode = "create" | "edit" | "view" | "submit";
@@ -33,6 +39,7 @@ export interface EditorProviderProps {
   initialFiles: Record<string, MonacoFile>;
   onSubmit?: () => void;
   onSave?: () => void;
+  onFilesChange?: (files: Record<string, MonacoFile>) => void;
 }
 
 export function EditorProvider({
@@ -42,9 +49,22 @@ export function EditorProvider({
   initialFiles,
   onSubmit,
   onSave,
+  onFilesChange,
 }: EditorProviderProps) {
   const filesAtom = useMemo(() => atom(initialFiles), [initialFiles]);
   const [files, setFiles] = useAtom(filesAtom);
+
+  // Sync file changes to parent component
+  useEffect(() => {
+    if (onFilesChange && files !== initialFiles) {
+      onFilesChange(files);
+    }
+  }, [files, onFilesChange, initialFiles]);
+
+  // Update internal state when initialFiles changes
+  useEffect(() => {
+    setFiles(initialFiles);
+  }, [initialFiles, setFiles]);
 
   const contextValue: EditorContextType = useMemo(() => {
     const canCreateFiles =

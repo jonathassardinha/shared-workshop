@@ -1,6 +1,8 @@
 "use client";
 
 import { useState } from "react";
+import { InitialModel } from "@/app/client.utils";
+import { useClientLogger } from "@/lib/Logger/ClientLogger";
 import { CreateWorkshopEditor } from "../../../components/workshop/CreateWorkshopEditor";
 
 interface Exercise {
@@ -11,17 +13,23 @@ interface Exercise {
 }
 
 export default function CreateWorkshopPage() {
-  const [currentStep, setCurrentStep] = useState(1);
+  const [currentStep, setCurrentStep] = useState(3);
   const [workshopData, setWorkshopData] = useState({
     title: "",
     description: "",
   });
+  const logger = useClientLogger();
   const [exercises, setExercises] = useState<Exercise[]>([
     {
       id: "1",
       title: "Getting Started",
       description: "Introduction exercise",
-      files: {},
+      files: {
+        "App.tsx": {
+          language: "typescript",
+          model: InitialModel,
+        },
+      },
     },
   ]);
   const [currentExerciseIndex, setCurrentExerciseIndex] = useState(0);
@@ -49,7 +57,7 @@ export default function CreateWorkshopPage() {
   };
 
   const handleSaveFiles = () => {
-    console.log("Files saved for exercise", currentExerciseIndex);
+    logger.info("Files saved for exercise", currentExerciseIndex);
     // This will be implemented with actual file saving logic
   };
 
@@ -61,8 +69,8 @@ export default function CreateWorkshopPage() {
   ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-[#18181b] to-[#1b1b1c] text-white">
-      <div className="mx-auto max-w-7xl px-4 py-8">
+    <main className="flex h-screen flex-col items-center overflow-hidden bg-gradient-to-b from-[#18181b] to-[#1b1b1c] text-white">
+      <div className="flex max-h-full w-full max-w-[1440px] grow flex-col items-stretch px-4 py-8">
         {/* Progress Steps */}
         <div className="mb-8">
           <div className="mb-4 flex items-center justify-between">
@@ -212,7 +220,7 @@ export default function CreateWorkshopPage() {
         )}
 
         {currentStep === 3 && (
-          <div className="h-full">
+          <div className="flex grow flex-col">
             <div className="mb-6 flex items-center justify-between">
               <h1 className="text-2xl font-bold">Configure Files</h1>
               <div className="flex items-center gap-4">
@@ -232,10 +240,21 @@ export default function CreateWorkshopPage() {
               </div>
             </div>
 
-            <div className="mb-6 h-[600px]">
+            <div className="mb-6 flex-1 overflow-hidden">
               <CreateWorkshopEditor
-                files={exercises[currentExerciseIndex]?.files}
+                files={exercises[currentExerciseIndex]?.files ?? {}}
                 onSave={handleSaveFiles}
+                onFilesChange={(
+                  newFiles: Record<string, { language: string; model: string }>,
+                ) => {
+                  setExercises((prev) =>
+                    prev.map((exercise, i) =>
+                      i === currentExerciseIndex
+                        ? { ...exercise, files: newFiles }
+                        : exercise,
+                    ),
+                  );
+                }}
               />
             </div>
 
@@ -278,7 +297,7 @@ export default function CreateWorkshopPage() {
                   Exercises ({exercises.length})
                 </h3>
                 <div className="space-y-2">
-                  {exercises.map((exercise, index) => (
+                  {exercises.map((exercise) => (
                     <div
                       key={exercise.id}
                       className="flex items-center justify-between rounded bg-gray-700 p-2"
@@ -302,7 +321,7 @@ export default function CreateWorkshopPage() {
               </button>
               <button
                 onClick={() => {
-                  console.log("Creating workshop...", {
+                  logger.debug("Creating workshop...", {
                     workshopData,
                     exercises,
                   });
@@ -318,6 +337,6 @@ export default function CreateWorkshopPage() {
           </div>
         )}
       </div>
-    </div>
+    </main>
   );
 }

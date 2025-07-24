@@ -33,7 +33,7 @@ export default function RootLayout({
               DEBUG_LOGGER: env.DEBUG_LOGGER,
             }}
           >
-            <div className="min-h-screen bg-gradient-to-b from-[#18181b] to-[#1b1b1c]">
+            <div className="flex h-screen flex-col overflow-hidden bg-gradient-to-b from-[#18181b] to-[#1b1b1c]">
               <Navigation />
               {children}
             </div>

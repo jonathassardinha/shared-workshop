@@ -4,7 +4,7 @@ import { Editor, type OnMount } from "@monaco-editor/react";
 import { type editor } from "monaco-editor";
 import { useRef, useState } from "react";
 import { useClientLogger } from "@/lib/Logger/ClientLogger";
-import { InitialModel, type MonacoFile } from "../../app/client.utils";
+import { type MonacoFile } from "../../app/client.utils";
 import { handleOnMount } from "./MonacoEditor.utils";
 
 export interface MonacoEditorProps {
@@ -20,7 +20,7 @@ export function MonacoEditor({
   model,
   onModelChange,
 }: MonacoEditorProps) {
-  const modelRef = useRef(InitialModel);
+  const modelRef = useRef(model);
   const logger = useClientLogger();
 
   const [editor, setEditor] = useState<editor.IStandaloneCodeEditor | null>(
@@ -29,9 +29,9 @@ export function MonacoEditor({
 
   const updateEditor = () => {
     if (modelRef.current !== editor?.getValue())
-      editor?.setValue(modelRef.current);
+      editor?.setValue(modelRef.current ?? "");
 
-    if (modelRef.current !== model) onModelChange?.(modelRef.current);
+    if (modelRef.current !== model) onModelChange?.(modelRef.current ?? "");
   };
 
   const onMount: OnMount = (mountedEditor, mountedMonaco) => {
@@ -50,7 +50,7 @@ export function MonacoEditor({
 
   return (
     <Editor
-      className="h-full w-full grow"
+      className="w-full grow"
       path={currentPath}
       wrapperProps={{
         className: "w-full grow flex flex-col",
@@ -64,6 +64,7 @@ export function MonacoEditor({
         minimap: {
           enabled: false,
         },
+        model: null,
       }}
       onMount={onMount}
       onChange={(value) => {

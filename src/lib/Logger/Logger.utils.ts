@@ -1,17 +1,17 @@
 export interface Logger {
-  info: (message: unknown) => void;
-  debug: (message: unknown) => void;
-  error: (message: unknown) => void;
+  info: (...messages: unknown[]) => void;
+  debug: (...messages: unknown[]) => void;
+  error: (...messages: unknown[]) => void;
 }
 
 export const getBaseLogger = (debugEnabled: boolean): Logger => ({
   // eslint-disable-next-line no-console
-  info: (message) => console.info(message),
-  debug: (message) => {
+  info: (...messages) => console.info(...messages),
+  debug: (...messages) => {
     if (debugEnabled) {
       // eslint-disable-next-line no-console
-      console.debug(message);
+      console.debug(...messages);
     }
   },
-  error: (message) => console.error(message),
+  error: (...messages) => console.error(...messages),
 });

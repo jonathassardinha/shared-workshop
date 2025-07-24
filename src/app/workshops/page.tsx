@@ -15,7 +15,7 @@ const mockWorkshops: Workshop[] = [
       "Learn the basics of React including components, props, state, and hooks. This workshop covers everything you need to get started with React development.",
     lecturerName: "John Doe",
     exerciseCount: 5,
-    isActive: true,
+    status: "live",
     createdAt: "2024-01-15",
   },
   {
@@ -25,7 +25,7 @@ const mockWorkshops: Workshop[] = [
       "Deep dive into advanced TypeScript patterns, generics, and type manipulation. Perfect for developers who want to master TypeScript.",
     lecturerName: "Jane Smith",
     exerciseCount: 8,
-    isActive: false,
+    status: "completed",
     createdAt: "2024-01-10",
   },
   {
@@ -35,7 +35,7 @@ const mockWorkshops: Workshop[] = [
       "Comprehensive guide to Next.js App Router, server components, and modern React patterns in Next.js 13+.",
     lecturerName: "Bob Johnson",
     exerciseCount: 6,
-    isActive: true,
+    status: "planned",
     createdAt: "2024-01-20",
   },
   {
@@ -45,7 +45,7 @@ const mockWorkshops: Workshop[] = [
       "Master modern CSS layout techniques with hands-on exercises in Grid and Flexbox.",
     lecturerName: "Alice Brown",
     exerciseCount: 4,
-    isActive: false,
+    status: "completed",
     createdAt: "2024-01-05",
   },
 ];
@@ -79,8 +79,9 @@ export default function WorkshopsPage() {
           </div>
           <select className="rounded-md border border-gray-600 bg-gray-800 px-3 py-2 text-white focus:border-blue-500 focus:outline-none">
             <option value="all">All Workshops</option>
-            <option value="active">Active Only</option>
-            <option value="inactive">Inactive Only</option>
+            <option value="live">Live Only</option>
+            <option value="planned">Planned Only</option>
+            <option value="completed">Completed Only</option>
           </select>
         </div>
 

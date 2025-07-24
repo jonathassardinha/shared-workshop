@@ -1,9 +1,7 @@
 import { atom } from "jotai";
 
-export const InitialModel = `import { Test } from "./test";
-
-const App = () => {
-  return <div>Hello, World! <Test /></div>;
+export const InitialModel = `const App = () => {
+  return <div>Hello, World!</div>;
 };
 
 export default App;`;
