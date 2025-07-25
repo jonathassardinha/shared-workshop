@@ -5,51 +5,59 @@ export const MAX_FILENAME_LENGTH = 50;
 
 // File Templates
 export const FILE_TEMPLATES = {
-  tsx: (componentName: string) => `interface ${componentName}Props {
-  // Add props here
+  tsx: (componentName: string) => `import React from 'react';
+
+interface ${componentName}Props {
+  // Add your props here
 }
 
 export function ${componentName}({}: ${componentName}Props) {
   return (
     <div>
       <h1>${componentName} Component</h1>
-      <p>This is a new React component.</p>
+      <p>This is a new component!</p>
     </div>
   );
-}`,
+}
 
-  ts: (fileName: string) => `// ${fileName} utility functions
+export default ${componentName};`,
 
-export const ${fileName.toLowerCase()}Util = {
-  // Add utility functions here
-};
+  jsx: (componentName: string) => `import React from 'react';
 
-export default ${fileName.toLowerCase()}Util;`,
-
-  jsx: (componentName: string) => `export function ${componentName}({}) {
+export function ${componentName}({}) {
   return (
     <div>
       <h1>${componentName} Component</h1>
-      <p>This is a new React component.</p>
+      <p>This is a new component!</p>
     </div>
   );
-}`,
-
-  js: (fileName: string) => `// ${fileName} utility functions
-
-export const ${fileName.toLowerCase()}Util = {
-  // Add utility functions here
-};
-
-export default ${fileName.toLowerCase()}Util;`,
-
-  css: (fileName: string) => `/* Styles for ${fileName} */
-
-.${fileName.toLowerCase()} {
-  /* Add styles here */
 }
 
-.${fileName.toLowerCase()}__container {
+export default ${componentName};`,
+
+  ts: (fileName: string) => `// ${fileName}
+// Add your TypeScript code here
+
+export interface ${getCapitalizedName(fileName)}Interface {
+  // Define your interface
+}
+
+export function ${fileName}Function() {
+  // Add your function logic
+}`,
+
+  js: (fileName: string) => `// ${fileName}
+// Add your JavaScript code here
+
+export function ${fileName}Function() {
+  // Add your function logic
+}`,
+
+  css: (fileName: string) => `/* ${fileName} */
+/* Add your styles here */
+
+.${fileName.toLowerCase()}-container {
+  /* Example styles */
   display: flex;
   flex-direction: column;
 }`,
@@ -57,18 +65,36 @@ export default ${fileName.toLowerCase()}Util;`,
   html: (fileName: string) => `<!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>${fileName}</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>${fileName}</title>
 </head>
 <body>
-  <div id="root">
-    <h1>${fileName}</h1>
-    <p>New HTML file content goes here.</p>
-  </div>
+    <h1>${fileName} Page</h1>
+    <p>This is a new HTML file!</p>
 </body>
 </html>`,
-};
+
+  json: (fileName: string) => `{
+  "name": "${fileName}",
+  "description": "Configuration file",
+  "version": "1.0.0"
+}`,
+
+  md: (fileName: string) => `# ${fileName}
+
+This is a new markdown file.
+
+## Features
+
+- Feature 1
+- Feature 2
+- Feature 3
+
+## Usage
+
+Add your usage instructions here.`,
+} as const;
 
 // File Validation
 export const FILENAME_REGEX = /^[a-zA-Z0-9._-]+$/;
@@ -84,45 +110,39 @@ export const VALID_EXTENSIONS = [
 ];
 
 // UI Constants
-export const NAVIGATION_HEIGHT = 64; // 16 * 4 = 64px (h-16)
+export const NAVIGATION_HEIGHT = 64;
 export const STEP_TRANSITION_DURATION = 300;
 
-// Workshop Status
-export const WORKSHOP_STATUS_COLORS = {
-  live: "bg-green-100 text-green-800",
-  planned: "bg-blue-100 text-blue-800",
-  completed: "bg-gray-100 text-gray-800",
-} as const;
-
 // Helper Functions
+function getCapitalizedName(fileName: string): string {
+  return fileName.charAt(0).toUpperCase() + fileName.slice(1);
+}
+
 export function getComponentNameFromFilename(filename: string): string {
-  return filename
-    .replace(/^\//, "") // Remove leading slash
-    .replace(/\.(tsx|jsx)$/, "") // Remove extension
-    .split(/[-_.]/) // Split on separators
-    .map((part) => part.charAt(0).toUpperCase() + part.slice(1)) // Capitalize each part
-    .join(""); // Join together
+  // Remove leading slash and file extension
+  const nameWithoutSlash = filename.replace(/^\//, "");
+  const nameWithoutExtension = nameWithoutSlash.replace(/\.[^/.]+$/, "");
+
+  // Convert to PascalCase component name
+  return nameWithoutExtension
+    .split(/[-_.]/)
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join("");
 }
 
 export function getFileLanguage(extension: string): string {
-  switch (extension) {
-    case "tsx":
-    case "ts":
-      return "typescript";
-    case "jsx":
-    case "js":
-      return "javascript";
-    case "css":
-      return "css";
-    case "html":
-      return "html";
-    case "json":
-      return "json";
-    case "md":
-      return "markdown";
-    default:
-      return "typescript"; // Default fallback
-  }
+  const languageMap: Record<string, string> = {
+    tsx: "typescript",
+    ts: "typescript",
+    jsx: "javascript",
+    js: "javascript",
+    css: "css",
+    html: "html",
+    json: "json",
+    md: "markdown",
+  };
+
+  return languageMap[extension] ?? "plaintext";
 }
 
 export function validateFilename(filename: string): {
@@ -136,24 +156,23 @@ export function validateFilename(filename: string): {
   if (filename.length > MAX_FILENAME_LENGTH) {
     return {
       isValid: false,
-      error: `Filename too long (max ${MAX_FILENAME_LENGTH} characters)`,
+      error: `Filename must be less than ${MAX_FILENAME_LENGTH} characters`,
     };
   }
 
-  const nameWithoutSlash = filename.replace(/^\//, "");
-
-  if (!FILENAME_REGEX.test(nameWithoutSlash)) {
+  if (!FILENAME_REGEX.test(filename)) {
     return {
       isValid: false,
-      error: "Invalid filename. Use only letters, numbers, dots, and dashes.",
+      error:
+        "Filename can only contain letters, numbers, dots, hyphens, and underscores",
     };
   }
 
-  const extension = nameWithoutSlash.split(".").pop()?.toLowerCase();
-  if (extension && !VALID_EXTENSIONS.includes(extension)) {
+  const extension = filename.split(".").pop()?.toLowerCase();
+  if (!extension || !VALID_EXTENSIONS.includes(extension)) {
     return {
       isValid: false,
-      error: `Unsupported file extension. Supported: ${VALID_EXTENSIONS.join(", ")}`,
+      error: `File extension must be one of: ${VALID_EXTENSIONS.join(", ")}`,
     };
   }
 

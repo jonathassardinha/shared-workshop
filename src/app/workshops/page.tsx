@@ -8,47 +8,51 @@ import {
 } from "../../components/workshop/WorkshopCard";
 import { useClientLogger } from "../../lib/Logger/ClientLogger";
 
-// Mock data for workshops
+// Mock data for workshops with ownership
 const mockWorkshops: Workshop[] = [
   {
     id: "1",
     title: "React Fundamentals",
     description:
       "Learn the basics of React including components, props, state, and hooks. This workshop covers everything you need to get started with React development.",
-    lecturerName: "John Doe",
+    ownerId: "user-1", // Alice Johnson
+    ownerName: "Alice Johnson",
     exerciseCount: 5,
     status: "live",
-    createdAt: "2024-01-15",
+    createdAt: "2024-01-15T00:00:00Z",
   },
   {
     id: "2",
     title: "TypeScript Advanced Patterns",
     description:
       "Deep dive into advanced TypeScript patterns, generics, and type manipulation. Perfect for developers who want to master TypeScript.",
-    lecturerName: "Jane Smith",
+    ownerId: "user-2", // Bob Smith
+    ownerName: "Bob Smith",
     exerciseCount: 8,
     status: "completed",
-    createdAt: "2024-01-10",
+    createdAt: "2024-01-10T00:00:00Z",
   },
   {
     id: "3",
     title: "Next.js App Router",
     description:
       "Comprehensive guide to Next.js App Router, server components, and modern React patterns in Next.js 13+.",
-    lecturerName: "Bob Johnson",
+    ownerId: "user-3", // Carol Davis
+    ownerName: "Carol Davis",
     exerciseCount: 6,
     status: "planned",
-    createdAt: "2024-01-20",
+    createdAt: "2024-01-20T00:00:00Z",
   },
   {
     id: "4",
     title: "CSS Grid & Flexbox",
     description:
       "Master modern CSS layout techniques with hands-on exercises in Grid and Flexbox.",
-    lecturerName: "Alice Brown",
+    ownerId: "user-4", // David Wilson
+    ownerName: "David Wilson",
     exerciseCount: 4,
     status: "completed",
-    createdAt: "2024-01-05",
+    createdAt: "2024-01-05T00:00:00Z",
   },
 ];
 
