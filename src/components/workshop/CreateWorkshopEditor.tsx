@@ -7,6 +7,12 @@ import {
   useEditor,
   type MonacoFile,
 } from "../Editor";
+import {
+  FILE_TEMPLATES,
+  getComponentNameFromFilename,
+  getFileLanguage,
+  validateFilename,
+} from "../../lib/constants";
 
 interface CreateWorkshopEditorProps {
   files: Record<string, MonacoFile>;
@@ -18,31 +24,49 @@ function CreateFileDialog({ onSave }: { onSave?: () => void }) {
   const { files, setFiles } = useEditor();
   const [showCreateFileDialog, setShowCreateFileDialog] = useState(false);
   const [newFileName, setNewFileName] = useState("");
+  const [error, setError] = useState<string | null>(null);
 
   const handleCreateFile = () => {
-    if (!newFileName.trim()) return;
+    // Clear previous errors
+    setError(null);
+
+    // Validate filename
+    const validation = validateFilename(newFileName);
+    if (!validation.isValid) {
+      setError(validation.error!);
+      return;
+    }
 
     const fileName = newFileName.startsWith("/")
       ? newFileName
       : `/${newFileName}`;
-    const extension = fileName.split(".").pop()?.toLowerCase();
 
-    let language = "typescript";
+    // Check for duplicates
+    if (files[fileName]) {
+      setError("File already exists!");
+      return;
+    }
+
+    const extension = fileName.split(".").pop()?.toLowerCase() ?? "";
+    const language = getFileLanguage(extension);
+
+    // Generate content using templates
     let defaultContent = "";
+    const nameWithoutSlash = fileName.replace(/^\//, "");
+    const nameWithoutExtension = nameWithoutSlash.replace(/\.[^/.]+$/, "");
 
-    if (extension === "tsx" || extension === "ts") {
-      language = "typescript";
-      defaultContent = `// New ${extension} file\nexport default function Component() {\n  return <div>New component</div>;\n}`;
-    } else if (extension === "css") {
-      language = "css";
-      defaultContent = "/* New CSS file */\n";
-    } else if (extension === "html") {
-      language = "html";
-      defaultContent =
-        "<!DOCTYPE html>\n<html>\n<head>\n  <title>New HTML file</title>\n</head>\n<body>\n  \n</body>\n</html>";
-    } else if (extension === "js" || extension === "jsx") {
-      language = "javascript";
-      defaultContent = `// New ${extension} file\nexport default function Component() {\n  return <div>New component</div>;\n}`;
+    if (extension in FILE_TEMPLATES) {
+      const template = FILE_TEMPLATES[extension as keyof typeof FILE_TEMPLATES];
+
+      if (extension === "tsx" || extension === "jsx") {
+        const componentName = getComponentNameFromFilename(fileName);
+        defaultContent = template(componentName);
+      } else {
+        defaultContent = template(nameWithoutExtension);
+      }
+    } else {
+      // Fallback for unsupported extensions
+      defaultContent = `// ${nameWithoutSlash}\n// New file created\n`;
     }
 
     const newFiles = {
@@ -56,6 +80,18 @@ function CreateFileDialog({ onSave }: { onSave?: () => void }) {
     setFiles(newFiles);
     setNewFileName("");
     setShowCreateFileDialog(false);
+    setError(null);
+  };
+
+  const handleInputChange = (value: string) => {
+    setNewFileName(value);
+    setError(null); // Clear error when user starts typing
+  };
+
+  const handleCancel = () => {
+    setShowCreateFileDialog(false);
+    setNewFileName("");
+    setError(null);
   };
 
   return (
@@ -81,33 +117,39 @@ function CreateFileDialog({ onSave }: { onSave?: () => void }) {
       </div>
 
       {showCreateFileDialog && (
-        <div className="bg-gray-750 border-b border-gray-700 px-4 py-3">
-          <div className="flex items-center gap-2">
-            <input
-              type="text"
-              value={newFileName}
-              onChange={(e) => setNewFileName(e.target.value)}
-              placeholder="Enter filename (e.g., component.tsx)"
-              className="flex-1 rounded border border-gray-600 bg-gray-800 px-3 py-1 text-sm text-white focus:border-blue-500 focus:outline-none"
-              onKeyDown={(e) => {
-                if (e.key === "Enter") handleCreateFile();
-                if (e.key === "Escape") setShowCreateFileDialog(false);
-              }}
-              autoFocus
-            />
-            <button
-              onClick={handleCreateFile}
-              disabled={!newFileName.trim()}
-              className="rounded bg-green-600 px-3 py-1 text-sm text-white hover:bg-green-700 disabled:bg-gray-600"
-            >
-              Create
-            </button>
-            <button
-              onClick={() => setShowCreateFileDialog(false)}
-              className="rounded bg-gray-600 px-3 py-1 text-sm text-white hover:bg-gray-700"
-            >
-              Cancel
-            </button>
+        <div className="border-b border-gray-700 bg-gray-800 px-4 py-3">
+          <div className="space-y-2">
+            <div className="flex items-center gap-2">
+              <input
+                type="text"
+                value={newFileName}
+                onChange={(e) => handleInputChange(e.target.value)}
+                placeholder="Enter filename (e.g., Button.tsx)"
+                className="flex-1 rounded border border-gray-600 bg-gray-800 px-3 py-1 text-sm text-white focus:border-blue-500 focus:outline-none"
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") handleCreateFile();
+                  if (e.key === "Escape") handleCancel();
+                }}
+                autoFocus
+              />
+              <button
+                onClick={handleCreateFile}
+                disabled={!newFileName.trim()}
+                className="rounded bg-green-600 px-3 py-1 text-sm text-white hover:bg-green-700 disabled:bg-gray-600"
+              >
+                Create
+              </button>
+              <button
+                onClick={handleCancel}
+                className="rounded bg-gray-600 px-3 py-1 text-sm text-white hover:bg-gray-700"
+              >
+                Cancel
+              </button>
+            </div>
+            {error && <p className="text-sm text-red-400">{error}</p>}
+            <p className="text-xs text-gray-500">
+              Supported: .tsx, .ts, .jsx, .js, .css, .html, .json, .md
+            </p>
           </div>
         </div>
       )}

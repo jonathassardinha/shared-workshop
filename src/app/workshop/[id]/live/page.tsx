@@ -1,8 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useState, use } from "react";
 import { LiveWorkshopEditor } from "../../../../components/workshop/LiveWorkshopEditor";
 import { type MonacoFile, type UserRole } from "../../../../components/Editor";
+import { useClientLogger } from "../../../../lib/Logger/ClientLogger";
 
 // Mock data for live workshop
 const mockWorkshopData = {
@@ -58,33 +59,36 @@ export default App;`,
 const mockUserRole: UserRole = "participant";
 
 interface LiveWorkshopPageProps {
-  params: {
+  params: Promise<{
     id: string;
-  };
+  }>;
 }
 
 export default function LiveWorkshopPage({ params }: LiveWorkshopPageProps) {
-  const [selectedParticipant, setSelectedParticipant] = useState<string | null>(
-    null,
-  );
-  const [currentFiles, setCurrentFiles] = useState<Record<string, MonacoFile>>(
+  const { id } = use(params);
+  const [currentFiles] = useState<Record<string, MonacoFile>>(
     mockWorkshopData.currentExercise.files,
   );
+  const logger = useClientLogger();
 
   const handleSubmit = () => {
-    console.log("Submitting solution...", currentFiles);
+    logger.info("Submitting solution for workshop:", id, currentFiles);
     alert("Solution submitted successfully!");
   };
 
   const handleSave = () => {
-    console.log("Saving changes...", currentFiles);
+    logger.info("Saving changes for workshop:", id, currentFiles);
     alert("Changes saved!");
   };
 
   const handleViewParticipantSubmission = (participantId: string) => {
-    setSelectedParticipant(participantId);
+    logger.debug(
+      "Loading submission for participant:",
+      participantId,
+      "in workshop:",
+      id,
+    );
     // In real implementation, this would load the participant's files
-    console.log("Loading submission for participant:", participantId);
   };
 
   return (
@@ -216,7 +220,7 @@ export default function LiveWorkshopPage({ params }: LiveWorkshopPageProps) {
               <ul className="space-y-1 text-xs text-gray-400">
                 <li>• Edit the code in the editor</li>
                 <li>• Use the preview to see your changes</li>
-                <li>• Submit when you're ready</li>
+                <li>• Submit when you&apos;re ready</li>
               </ul>
             </div>
           </div>

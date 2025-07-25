@@ -1,10 +1,12 @@
 "use client";
 
 import Link from "next/link";
+import { useState, useEffect } from "react";
 import {
   WorkshopCard,
   type Workshop,
 } from "../../components/workshop/WorkshopCard";
+import { useClientLogger } from "../../lib/Logger/ClientLogger";
 
 // Mock data for workshops
 const mockWorkshops: Workshop[] = [
@@ -50,7 +52,54 @@ const mockWorkshops: Workshop[] = [
   },
 ];
 
+function LoadingSkeleton() {
+  return (
+    <div className="animate-pulse">
+      <div className="rounded-lg border border-gray-700 bg-gray-800 p-6">
+        <div className="space-y-4">
+          <div className="h-6 w-3/4 rounded bg-gray-700"></div>
+          <div className="space-y-2">
+            <div className="h-4 rounded bg-gray-700"></div>
+            <div className="h-4 w-5/6 rounded bg-gray-700"></div>
+          </div>
+          <div className="flex gap-4">
+            <div className="h-3 w-16 rounded bg-gray-700"></div>
+            <div className="h-3 w-20 rounded bg-gray-700"></div>
+            <div className="h-3 w-16 rounded bg-gray-700"></div>
+          </div>
+          <div className="mt-4 flex gap-2">
+            <div className="h-8 w-24 rounded bg-gray-700"></div>
+            <div className="h-8 flex-1 rounded bg-gray-700"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function WorkshopsPage() {
+  const [workshops, setWorkshops] = useState<Workshop[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const logger = useClientLogger();
+
+  useEffect(() => {
+    // Simulate API call
+    const loadWorkshops = async () => {
+      setIsLoading(true);
+      try {
+        // Simulate network delay
+        await new Promise((resolve) => setTimeout(resolve, 1000));
+        setWorkshops(mockWorkshops);
+      } catch (error) {
+        logger.error("Error loading workshops:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    void loadWorkshops();
+  }, [logger]);
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-[#18181b] to-[#1b1b1c] text-white">
       <div className="mx-auto max-w-7xl px-4 py-8">
@@ -85,13 +134,21 @@ export default function WorkshopsPage() {
           </select>
         </div>
 
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-          {mockWorkshops.map((workshop) => (
-            <WorkshopCard key={workshop.id} workshop={workshop} />
-          ))}
-        </div>
+        {isLoading ? (
+          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+            {Array.from({ length: 6 }).map((_, index) => (
+              <LoadingSkeleton key={index} />
+            ))}
+          </div>
+        ) : (
+          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+            {workshops.map((workshop) => (
+              <WorkshopCard key={workshop.id} workshop={workshop} />
+            ))}
+          </div>
+        )}
 
-        {mockWorkshops.length === 0 && (
+        {!isLoading && workshops.length === 0 && (
           <div className="py-12 text-center">
             <p className="mb-4 text-gray-400">No workshops found</p>
             <Link

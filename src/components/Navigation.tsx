@@ -26,14 +26,14 @@ export function Navigation() {
               Shared Workshop
             </Link>
 
-            <div className="flex space-x-6">
+            <div className="flex h-16">
               <Link
                 href="/workshops"
                 className={cn(
-                  "text-sm font-medium transition-colors hover:text-white",
+                  "flex items-center border-b-2 px-1 text-sm font-medium transition-colors hover:text-white",
                   isActive("/workshops")
-                    ? "border-b-2 border-blue-500 text-white"
-                    : "text-gray-300",
+                    ? "border-blue-500 text-white"
+                    : "border-transparent text-gray-300",
                 )}
               >
                 Workshops
@@ -43,10 +43,10 @@ export function Navigation() {
                 <Link
                   href="/workshop/create"
                   className={cn(
-                    "text-sm font-medium transition-colors hover:text-white",
+                    "ml-6 flex items-center border-b-2 px-1 text-sm font-medium transition-colors hover:text-white",
                     isActive("/workshop/create")
-                      ? "border-b-2 border-blue-500 text-white"
-                      : "text-gray-300",
+                      ? "border-blue-500 text-white"
+                      : "border-transparent text-gray-300",
                   )}
                 >
                   Create Workshop

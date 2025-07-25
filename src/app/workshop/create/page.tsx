@@ -1,9 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import { InitialModel } from "@/app/client.utils";
-import { useClientLogger } from "@/lib/Logger/ClientLogger";
 import { CreateWorkshopEditor } from "../../../components/workshop/CreateWorkshopEditor";
+import { MIN_EXERCISES, MAX_EXERCISES } from "../../../lib/constants";
+import { useClientLogger } from "../../../lib/Logger/ClientLogger";
 
 interface Exercise {
   id: string;
@@ -14,31 +14,69 @@ interface Exercise {
 
 export default function CreateWorkshopPage() {
   const [currentStep, setCurrentStep] = useState(1);
+  const [isCreating, setIsCreating] = useState(false);
+  const [errors, setErrors] = useState<Record<string, string>>({});
   const [workshopData, setWorkshopData] = useState({
     title: "",
     description: "",
   });
-  const logger = useClientLogger();
   const [exercises, setExercises] = useState<Exercise[]>([
     {
       id: "1",
       title: "Getting Started",
       description: "Introduction exercise",
-      files: {
-        "/App.tsx": {
-          language: "typescript",
-          model: InitialModel,
-        },
-      },
+      files: {},
     },
   ]);
   const [currentExerciseIndex, setCurrentExerciseIndex] = useState(0);
+  const logger = useClientLogger();
 
   const handleWorkshopDataChange = (field: string, value: string) => {
     setWorkshopData((prev) => ({ ...prev, [field]: value }));
+    // Clear error when user starts typing
+    if (errors[field]) {
+      setErrors((prev) => ({ ...prev, [field]: "" }));
+    }
+  };
+
+  const validateStep1 = () => {
+    const newErrors: Record<string, string> = {};
+
+    if (!workshopData.title.trim()) {
+      newErrors.title = "Workshop title is required";
+    } else if (workshopData.title.length < 3) {
+      newErrors.title = "Title must be at least 3 characters";
+    }
+
+    if (!workshopData.description.trim()) {
+      newErrors.description = "Workshop description is required";
+    } else if (workshopData.description.length < 10) {
+      newErrors.description = "Description must be at least 10 characters";
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const validateStep2 = () => {
+    const newErrors: Record<string, string> = {};
+
+    exercises.forEach((exercise, index) => {
+      if (!exercise.title.trim()) {
+        newErrors[`exercise-${index}-title`] = "Exercise title is required";
+      }
+    });
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
   };
 
   const addExercise = () => {
+    if (exercises.length >= MAX_EXERCISES) {
+      alert(`Maximum ${MAX_EXERCISES} exercises allowed`);
+      return;
+    }
+
     const newExercise: Exercise = {
       id: Date.now().toString(),
       title: `Exercise ${exercises.length + 1}`,
@@ -48,17 +86,62 @@ export default function CreateWorkshopPage() {
     setExercises((prev) => [...prev, newExercise]);
   };
 
+  const removeExercise = (index: number) => {
+    if (exercises.length <= MIN_EXERCISES) {
+      alert(`Minimum ${MIN_EXERCISES} exercise required`);
+      return;
+    }
+
+    setExercises((prev) => prev.filter((_, i) => i !== index));
+
+    // Adjust current exercise index if necessary
+    if (currentExerciseIndex >= exercises.length - 1) {
+      setCurrentExerciseIndex(Math.max(0, exercises.length - 2));
+    }
+  };
+
   const updateExercise = (index: number, field: string, value: string) => {
     setExercises((prev) =>
       prev.map((exercise, i) =>
         i === index ? { ...exercise, [field]: value } : exercise,
       ),
     );
+
+    // Clear error when user starts typing
+    const errorKey = `exercise-${index}-${field}`;
+    if (errors[errorKey]) {
+      setErrors((prev) => ({ ...prev, [errorKey]: "" }));
+    }
   };
 
   const handleSaveFiles = () => {
-    logger.info("Files saved for exercise", currentExerciseIndex);
+    logger.debug("Files saved for exercise", currentExerciseIndex);
     // This will be implemented with actual file saving logic
+  };
+
+  const handleNextStep = (nextStep: number) => {
+    if (nextStep === 2 && !validateStep1()) return;
+    if (nextStep === 3 && !validateStep2()) return;
+
+    setCurrentStep(nextStep);
+    setErrors({}); // Clear errors when moving to next step
+  };
+
+  const handleCreateWorkshop = async () => {
+    setIsCreating(true);
+    try {
+      logger.info("Creating workshop...", { workshopData, exercises });
+      // Simulate API call
+      await new Promise((resolve) => setTimeout(resolve, 2000));
+      alert(
+        "Workshop created! (This will redirect to the workshop page in future phases)",
+      );
+    } catch (error) {
+      logger.error("Error creating workshop:", error);
+      alert("Error creating workshop. Please try again.");
+    } finally {
+      setIsCreating(false);
+    }
   };
 
   const steps = [
@@ -69,8 +152,8 @@ export default function CreateWorkshopPage() {
   ];
 
   return (
-    <main className="flex h-screen flex-col items-center overflow-hidden bg-gradient-to-b from-[#18181b] to-[#1b1b1c] text-white">
-      <div className="flex max-h-full w-full max-w-[1440px] grow flex-col items-stretch px-4 py-8">
+    <div className="min-h-screen bg-gradient-to-b from-[#18181b] to-[#1b1b1c] text-white">
+      <div className="mx-auto max-w-7xl px-4 py-8">
         {/* Progress Steps */}
         <div className="mb-8">
           <div className="mb-4 flex items-center justify-between">
@@ -120,9 +203,16 @@ export default function CreateWorkshopPage() {
                   onChange={(e) =>
                     handleWorkshopDataChange("title", e.target.value)
                   }
-                  className="w-full rounded-md border border-gray-600 bg-gray-800 px-3 py-2 text-white focus:border-blue-500 focus:outline-none"
+                  className={`w-full rounded-md border px-3 py-2 text-white focus:outline-none ${
+                    errors.title
+                      ? "border-red-500 bg-red-900/20 focus:border-red-400"
+                      : "border-gray-600 bg-gray-800 focus:border-blue-500"
+                  }`}
                   placeholder="Enter workshop title..."
                 />
+                {errors.title && (
+                  <p className="mt-1 text-sm text-red-400">{errors.title}</p>
+                )}
               </div>
 
               <div>
@@ -135,17 +225,25 @@ export default function CreateWorkshopPage() {
                     handleWorkshopDataChange("description", e.target.value)
                   }
                   rows={4}
-                  className="w-full rounded-md border border-gray-600 bg-gray-800 px-3 py-2 text-white focus:border-blue-500 focus:outline-none"
+                  className={`w-full rounded-md border px-3 py-2 text-white focus:outline-none ${
+                    errors.description
+                      ? "border-red-500 bg-red-900/20 focus:border-red-400"
+                      : "border-gray-600 bg-gray-800 focus:border-blue-500"
+                  }`}
                   placeholder="Describe your workshop..."
                 />
+                {errors.description && (
+                  <p className="mt-1 text-sm text-red-400">
+                    {errors.description}
+                  </p>
+                )}
               </div>
             </div>
 
             <div className="mt-8 flex justify-end">
               <button
-                onClick={() => setCurrentStep(2)}
-                disabled={!workshopData.title.trim()}
-                className="rounded-md bg-blue-600 px-4 py-2 text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-gray-600"
+                onClick={() => handleNextStep(2)}
+                className="rounded-md bg-blue-600 px-4 py-2 text-white hover:bg-blue-700"
               >
                 Next: Create Exercises
               </button>
@@ -155,7 +253,12 @@ export default function CreateWorkshopPage() {
 
         {currentStep === 2 && (
           <div className="mx-auto max-w-4xl">
-            <h1 className="mb-6 text-2xl font-bold">Create Exercises</h1>
+            <div className="mb-6 flex items-center justify-between">
+              <h1 className="text-2xl font-bold">Create Exercises</h1>
+              <span className="text-sm text-gray-400">
+                {exercises.length} of {MAX_EXERCISES} exercises
+              </span>
+            </div>
 
             <div className="mb-6 space-y-4">
               {exercises.map((exercise, index) => (
@@ -163,6 +266,20 @@ export default function CreateWorkshopPage() {
                   key={exercise.id}
                   className="rounded-lg border border-gray-700 bg-gray-800 p-4"
                 >
+                  <div className="mb-4 flex items-start justify-between">
+                    <h3 className="text-lg font-medium">
+                      Exercise {index + 1}
+                    </h3>
+                    {exercises.length > MIN_EXERCISES && (
+                      <button
+                        onClick={() => removeExercise(index)}
+                        className="text-sm text-red-400 hover:text-red-300"
+                        title="Remove exercise"
+                      >
+                        Remove
+                      </button>
+                    )}
+                  </div>
                   <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                     <div>
                       <label className="mb-2 block text-sm font-medium">
@@ -174,8 +291,17 @@ export default function CreateWorkshopPage() {
                         onChange={(e) =>
                           updateExercise(index, "title", e.target.value)
                         }
-                        className="w-full rounded-md border border-gray-600 bg-gray-700 px-3 py-2 text-white focus:border-blue-500 focus:outline-none"
+                        className={`w-full rounded-md border px-3 py-2 text-white focus:outline-none ${
+                          errors[`exercise-${index}-title`]
+                            ? "border-red-500 bg-red-900/20 focus:border-red-400"
+                            : "border-gray-600 bg-gray-700 focus:border-blue-500"
+                        }`}
                       />
+                      {errors[`exercise-${index}-title`] && (
+                        <p className="mt-1 text-sm text-red-400">
+                          {errors[`exercise-${index}-title`]}
+                        </p>
+                      )}
                     </div>
                     <div>
                       <label className="mb-2 block text-sm font-medium">
@@ -197,9 +323,11 @@ export default function CreateWorkshopPage() {
 
             <button
               onClick={addExercise}
-              className="mb-6 rounded-md border border-gray-600 px-4 py-2 text-white hover:bg-gray-700"
+              disabled={exercises.length >= MAX_EXERCISES}
+              className="mb-6 rounded-md border border-gray-600 px-4 py-2 text-white hover:bg-gray-700 disabled:cursor-not-allowed disabled:opacity-50"
             >
-              + Add Exercise
+              + Add Exercise{" "}
+              {exercises.length >= MAX_EXERCISES && `(Max ${MAX_EXERCISES})`}
             </button>
 
             <div className="flex justify-between">
@@ -210,7 +338,7 @@ export default function CreateWorkshopPage() {
                 Back
               </button>
               <button
-                onClick={() => setCurrentStep(3)}
+                onClick={() => handleNextStep(3)}
                 className="rounded-md bg-blue-600 px-4 py-2 text-white hover:bg-blue-700"
               >
                 Next: Configure Files
@@ -302,7 +430,14 @@ export default function CreateWorkshopPage() {
                       key={exercise.id}
                       className="flex items-center justify-between rounded bg-gray-700 p-2"
                     >
-                      <span>{exercise.title}</span>
+                      <div>
+                        <span className="font-medium">{exercise.title}</span>
+                        {exercise.description && (
+                          <span className="ml-2 text-sm text-gray-400">
+                            - {exercise.description}
+                          </span>
+                        )}
+                      </div>
                       <span className="text-sm text-gray-400">
                         {Object.keys(exercise.files).length} files
                       </span>
@@ -315,28 +450,29 @@ export default function CreateWorkshopPage() {
             <div className="mt-8 flex justify-between">
               <button
                 onClick={() => setCurrentStep(3)}
-                className="rounded-md border border-gray-600 px-4 py-2 text-white hover:bg-gray-700"
+                disabled={isCreating}
+                className="rounded-md border border-gray-600 px-4 py-2 text-white hover:bg-gray-700 disabled:opacity-50"
               >
                 Back
               </button>
               <button
-                onClick={() => {
-                  logger.debug("Creating workshop...", {
-                    workshopData,
-                    exercises,
-                  });
-                  alert(
-                    "Workshop created! (This will redirect to the workshop page in future phases)",
-                  );
-                }}
-                className="rounded-md bg-green-600 px-6 py-2 font-medium text-white hover:bg-green-700"
+                onClick={handleCreateWorkshop}
+                disabled={isCreating}
+                className="flex items-center gap-2 rounded-md bg-green-600 px-6 py-2 font-medium text-white hover:bg-green-700 disabled:cursor-not-allowed disabled:opacity-50"
               >
-                Create Workshop
+                {isCreating ? (
+                  <>
+                    <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent"></div>
+                    Creating...
+                  </>
+                ) : (
+                  "Create Workshop"
+                )}
               </button>
             </div>
           </div>
         )}
       </div>
-    </main>
+    </div>
   );
 }

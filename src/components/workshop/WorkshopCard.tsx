@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { WORKSHOP_STATUS_COLORS } from "../../lib/constants";
 
 export type WorkshopStatus = "planned" | "live" | "completed";
 
@@ -15,6 +16,19 @@ export interface Workshop {
 interface WorkshopCardProps {
   workshop: Workshop;
 }
+
+const getStatusLabel = (status: WorkshopStatus): string => {
+  switch (status) {
+    case "live":
+      return "Live";
+    case "planned":
+      return "Planned";
+    case "completed":
+      return "Completed";
+    default:
+      return "Unknown";
+  }
+};
 
 export function WorkshopCard({ workshop }: WorkshopCardProps) {
   return (
@@ -37,18 +51,10 @@ export function WorkshopCard({ workshop }: WorkshopCardProps) {
           <div className="flex items-center gap-2">
             <span
               className={`inline-flex items-center rounded-full px-2 py-1 text-xs ${
-                workshop.status === "live"
-                  ? "bg-green-100 text-green-800"
-                  : workshop.status === "planned"
-                    ? "bg-blue-100 text-blue-800"
-                    : "bg-gray-100 text-gray-800"
+                WORKSHOP_STATUS_COLORS[workshop.status]
               }`}
             >
-              {workshop.status === "live"
-                ? "Live"
-                : workshop.status === "planned"
-                  ? "Planned"
-                  : "Completed"}
+              {getStatusLabel(workshop.status)}
             </span>
           </div>
         </div>
