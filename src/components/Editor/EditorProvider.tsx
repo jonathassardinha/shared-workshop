@@ -26,6 +26,7 @@ export interface EditorContextType {
   canSave: boolean;
   onSubmit?: () => void;
   onSave?: () => void;
+  onDeleteFile?: (filePath: string) => void;
   files: Record<string, MonacoFile>;
   setFiles: (files: Record<string, MonacoFile>) => void;
 }
@@ -40,6 +41,7 @@ export interface EditorProviderProps {
   onSubmit?: () => void;
   onSave?: () => void;
   onFilesChange?: (files: Record<string, MonacoFile>) => void;
+  onDeleteFile?: (filePath: string) => void;
 }
 
 export function EditorProvider({
@@ -50,6 +52,7 @@ export function EditorProvider({
   onSubmit,
   onSave,
   onFilesChange,
+  onDeleteFile,
 }: EditorProviderProps) {
   const filesAtom = useMemo(() => atom(initialFiles), [initialFiles]);
   const [files, setFiles] = useAtom(filesAtom);
@@ -84,10 +87,11 @@ export function EditorProvider({
       canSave,
       onSubmit,
       onSave,
+      onDeleteFile,
       files,
       setFiles,
     };
-  }, [mode, userRole, onSubmit, onSave, files, setFiles]);
+  }, [mode, userRole, onSubmit, onSave, onDeleteFile, files, setFiles]);
 
   return (
     <EditorContext.Provider value={contextValue}>

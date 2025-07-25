@@ -13,7 +13,7 @@ interface Exercise {
 }
 
 export default function CreateWorkshopPage() {
-  const [currentStep, setCurrentStep] = useState(3);
+  const [currentStep, setCurrentStep] = useState(1);
   const [workshopData, setWorkshopData] = useState({
     title: "",
     description: "",
@@ -25,7 +25,7 @@ export default function CreateWorkshopPage() {
       title: "Getting Started",
       description: "Introduction exercise",
       files: {
-        "App.tsx": {
+        "/App.tsx": {
           language: "typescript",
           model: InitialModel,
         },

@@ -11,8 +11,6 @@ export function ControlledMonacoEditor() {
     updateCode(newCode);
   };
 
-  console.debug(code, files);
-
   return (
     <MonacoEditor
       model={code}

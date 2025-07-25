@@ -11,7 +11,7 @@ import { useEditor } from "./EditorProvider";
 import { FileExplorer } from "./FileExplorer";
 
 export function EditorLayout() {
-  const { files } = useEditor();
+  const { files, onDeleteFile } = useEditor();
 
   const defaultFiles: SandpackFiles = useMemo(() => {
     return Object.entries(files).reduce((acc, [key, value], index) => {
@@ -34,8 +34,9 @@ export function EditorLayout() {
         }}
         className="flex w-full flex-row [&_>_*]:border [&_>_*]:border-r-0 [&_>_*]:border-gray-500 [&_>_*:last-child]:border-r"
         files={defaultFiles}
+        options={{ bundlerURL: "https://sandpack-bundler.codesandbox.io" }}
       >
-        <FileExplorer />
+        <FileExplorer onDeleteFile={onDeleteFile} />
         <ControlledMonacoEditor />
         <SandpackPreview />
       </SandpackProvider>

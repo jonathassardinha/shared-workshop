@@ -58,12 +58,6 @@ function CreateFileDialog({ onSave }: { onSave?: () => void }) {
     setShowCreateFileDialog(false);
   };
 
-  const handleDeleteFile = (filePath: string) => {
-    const newFiles = { ...files };
-    delete newFiles[filePath];
-    setFiles(newFiles);
-  };
-
   return (
     <>
       <div className="flex items-center justify-between border-b border-gray-700 bg-gray-800 px-4 py-2">
@@ -132,6 +126,12 @@ export function CreateWorkshopEditor({
   onSave,
   onFilesChange,
 }: CreateWorkshopEditorProps) {
+  const handleDeleteFile = (filePath: string) => {
+    const newFiles = { ...files };
+    delete newFiles[filePath];
+    onFilesChange(newFiles);
+  };
+
   return (
     <EditorProvider
       mode="create"
@@ -139,6 +139,7 @@ export function CreateWorkshopEditor({
       initialFiles={files}
       onSave={onSave}
       onFilesChange={onFilesChange}
+      onDeleteFile={handleDeleteFile}
     >
       <div className="flex h-full flex-col">
         <CreateFileDialog onSave={onSave} />
