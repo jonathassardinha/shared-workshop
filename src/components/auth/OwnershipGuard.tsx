@@ -2,6 +2,9 @@
 
 import { useSession } from "next-auth/react";
 import { type ReactNode } from "react";
+import { AlertTriangle } from "lucide-react";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Skeleton } from "@/components/ui/skeleton";
 import { type Workshop } from "../../lib/auth/ownership";
 import { useWorkshopPermissions } from "../../hooks/useOwnership";
 
@@ -27,7 +30,7 @@ export function OwnershipGuard({
   if (status === "loading" || permissions.isLoading) {
     return (
       <div className="flex items-center justify-center p-4">
-        <div className="h-6 w-6 animate-spin rounded-full border-2 border-blue-500 border-t-transparent"></div>
+        <Skeleton className="h-6 w-6 rounded-full" />
       </div>
     );
   }
@@ -152,24 +155,16 @@ export function AccessDenied({
   className = "",
 }: AccessDeniedProps) {
   return (
-    <div className={`p-8 text-center ${className}`}>
-      <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-red-100">
-        <svg
-          className="h-8 w-8 text-red-600"
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={2}
-            d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.732-.833-2.464 0L3.34 16.5c-.77.833.192 2.5 1.732 2.5z"
-          />
-        </svg>
-      </div>
-      <h3 className="mb-2 text-lg font-medium text-gray-100">{title}</h3>
-      <p className="text-gray-400">{message}</p>
+    <div className={`flex items-center justify-center p-8 ${className}`}>
+      <Alert className="max-w-md border-red-200 bg-red-50 dark:border-red-800 dark:bg-red-950">
+        <AlertTriangle className="h-4 w-4 text-red-600 dark:text-red-400" />
+        <AlertTitle className="text-red-800 dark:text-red-200">
+          {title}
+        </AlertTitle>
+        <AlertDescription className="text-red-700 dark:text-red-300">
+          {message}
+        </AlertDescription>
+      </Alert>
     </div>
   );
 }

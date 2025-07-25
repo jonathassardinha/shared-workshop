@@ -2,7 +2,17 @@
 
 import { signIn } from "next-auth/react";
 import { useState } from "react";
-import Image from "next/image";
+import { User, ArrowLeft, Loader2 } from "lucide-react";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { mockUsers } from "../../lib/auth/mockUsers";
 
 interface LoginPromptProps {
@@ -36,114 +46,107 @@ export function LoginPrompt({
   const isDevelopment = process.env.NODE_ENV === "development";
 
   return (
-    <div className={`p-8 text-center ${className}`}>
-      <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-blue-100">
-        <svg
-          className="h-8 w-8 text-blue-600"
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={2}
-            d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
-          />
-        </svg>
-      </div>
+    <div className={`flex items-center justify-center ${className}`}>
+      <Card className="w-full max-w-md border-gray-600 bg-gray-800">
+        <CardHeader className="text-center">
+          <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-blue-100">
+            <User className="h-8 w-8 text-blue-600" />
+          </div>
+          <CardTitle className="text-lg font-medium text-gray-100">
+            {title}
+          </CardTitle>
+          <CardDescription className="text-gray-400">{message}</CardDescription>
+        </CardHeader>
 
-      <h3 className="mb-2 text-lg font-medium text-gray-100">{title}</h3>
-      <p className="mb-6 text-gray-400">{message}</p>
+        <CardContent>
+          {isDevelopment ? (
+            <div className="space-y-4">
+              {!showMockUsers ? (
+                <Button
+                  onClick={() => setShowMockUsers(true)}
+                  className="w-full bg-blue-600 text-white hover:bg-blue-700"
+                >
+                  Choose Mock User (Development)
+                </Button>
+              ) : (
+                <div className="space-y-4">
+                  <Alert className="border-yellow-500 bg-yellow-500/10">
+                    <AlertDescription className="text-sm text-yellow-400">
+                      Development Mode - Choose a test user:
+                    </AlertDescription>
+                  </Alert>
 
-      {isDevelopment ? (
-        <div className="space-y-4">
-          {!showMockUsers ? (
-            <button
-              onClick={() => setShowMockUsers(true)}
-              className="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-blue-700"
-            >
-              Choose Mock User (Development)
-            </button>
-          ) : (
-            <div className="mx-auto max-w-md">
-              <p className="mb-3 text-sm text-yellow-400">
-                Development Mode - Choose a test user:
-              </p>
-              <div className="space-y-2">
-                {mockUsers.map((user) => {
-                  const isLoadingUser = isLoading === user.id;
+                  <div className="space-y-2">
+                    {mockUsers.map((user) => {
+                      const isLoadingUser = isLoading === user.id;
 
-                  return (
-                    <button
-                      key={user.id}
-                      onClick={() => handleMockSignIn(user.id)}
-                      disabled={isLoadingUser}
-                      className={`flex w-full items-center gap-3 rounded-lg border border-gray-600 bg-gray-800 p-3 text-left transition-colors hover:bg-gray-700 ${
-                        isLoadingUser ? "opacity-50" : ""
-                      }`}
-                    >
-                      <div className="relative h-8 w-8 flex-shrink-0 overflow-hidden rounded-full bg-gray-600">
-                        {user.image ? (
-                          <Image
-                            src={user.image}
-                            alt={user.name}
-                            width={32}
-                            height={32}
-                            className="h-full w-full object-cover"
-                          />
-                        ) : (
-                          <div className="flex h-full w-full items-center justify-center text-xs font-medium text-white">
-                            {user.name
-                              .split(" ")
-                              .map((n) => n.charAt(0))
-                              .join("")
-                              .toUpperCase()
-                              .slice(0, 2)}
+                      return (
+                        <Button
+                          key={user.id}
+                          onClick={() => handleMockSignIn(user.id)}
+                          disabled={isLoadingUser}
+                          variant="outline"
+                          className="h-auto w-full justify-start border-gray-600 bg-gray-800 p-3 hover:bg-gray-700"
+                        >
+                          <Avatar className="mr-3 h-8 w-8 flex-shrink-0">
+                            <AvatarImage src={user.image} alt={user.name} />
+                            <AvatarFallback className="bg-gray-600 text-xs text-white">
+                              {user.name
+                                .split(" ")
+                                .map((n) => n.charAt(0))
+                                .join("")
+                                .toUpperCase()
+                                .slice(0, 2)}
+                            </AvatarFallback>
+                          </Avatar>
+
+                          <div className="min-w-0 flex-1 text-left">
+                            <div className="flex items-center gap-2">
+                              <p className="truncate text-sm font-medium text-white">
+                                {user.name}
+                              </p>
+                              {isLoadingUser && (
+                                <Loader2 className="h-3 w-3 animate-spin" />
+                              )}
+                            </div>
+                            <p className="truncate text-xs text-gray-400">
+                              {user.email}
+                            </p>
                           </div>
-                        )}
-                      </div>
+                        </Button>
+                      );
+                    })}
+                  </div>
 
-                      <div className="min-w-0 flex-1">
-                        <div className="flex items-center gap-2">
-                          <p className="truncate text-sm font-medium text-white">
-                            {user.name}
-                          </p>
-                          {isLoadingUser && (
-                            <div className="h-3 w-3 animate-spin rounded-full border border-white border-t-transparent"></div>
-                          )}
-                        </div>
-                        <p className="truncate text-xs text-gray-400">
-                          {user.email}
-                        </p>
-                      </div>
-                    </button>
-                  );
-                })}
-              </div>
-
-              <button
-                onClick={() => setShowMockUsers(false)}
-                className="mt-3 text-sm text-gray-400 hover:text-gray-300"
+                  <Button
+                    onClick={() => setShowMockUsers(false)}
+                    variant="ghost"
+                    size="sm"
+                    className="w-full text-gray-400 hover:text-gray-300"
+                  >
+                    <ArrowLeft className="mr-2 h-4 w-4" />
+                    Back
+                  </Button>
+                </div>
+              )}
+            </div>
+          ) : (
+            <div className="space-y-4">
+              <Alert className="border-gray-600">
+                <AlertDescription className="text-sm text-gray-500">
+                  Authentication providers will be available here in production.
+                </AlertDescription>
+              </Alert>
+              <Button
+                disabled
+                className="w-full cursor-not-allowed bg-gray-600 text-gray-400"
               >
-                ← Back
-              </button>
+                Sign In (Coming Soon)
+              </Button>
             </div>
           )}
-        </div>
-      ) : (
-        <div className="space-y-4">
-          <p className="text-sm text-gray-500">
-            Authentication providers will be available here in production.
-          </p>
-          <button
-            disabled
-            className="cursor-not-allowed rounded-md bg-gray-600 px-4 py-2 text-sm font-medium text-gray-400"
-          >
-            Sign In (Coming Soon)
-          </button>
-        </div>
-      )}
+        </CardContent>
+      </Card>
     </div>
   );
 }

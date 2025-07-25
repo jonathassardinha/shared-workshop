@@ -1,8 +1,18 @@
 "use client";
 
 import { useSession, signOut } from "next-auth/react";
-import { useState, useRef, useEffect } from "react";
-import Image from "next/image";
+import { LogOut, ChevronDown } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
 
 interface UserProfileProps {
   className?: string;
@@ -10,30 +20,12 @@ interface UserProfileProps {
 
 export function UserProfile({ className = "" }: UserProfileProps) {
   const { data: session, status } = useSession();
-  const [isOpen, setIsOpen] = useState(false);
-  const dropdownRef = useRef<HTMLDivElement>(null);
-
-  // Close dropdown when clicking outside
-  useEffect(() => {
-    function handleClickOutside(event: MouseEvent) {
-      if (
-        dropdownRef.current &&
-        !dropdownRef.current.contains(event.target as Node)
-      ) {
-        setIsOpen(false);
-      }
-    }
-
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
-  }, []);
 
   if (status === "loading") {
     return (
-      <div className={`flex items-center ${className}`}>
-        <div className="h-8 w-8 animate-pulse rounded-full bg-gray-600"></div>
+      <div className={`flex items-center gap-2 ${className}`}>
+        <Skeleton className="h-8 w-8 rounded-full" />
+        <Skeleton className="hidden h-4 w-24 md:block" />
       </div>
     );
   }
@@ -43,7 +35,6 @@ export function UserProfile({ className = "" }: UserProfileProps) {
   }
 
   const handleSignOut = async () => {
-    setIsOpen(false);
     await signOut({ redirect: false });
   };
 
@@ -56,105 +47,74 @@ export function UserProfile({ className = "" }: UserProfileProps) {
     .slice(0, 2);
 
   return (
-    <div className={`relative ${className}`} ref={dropdownRef}>
-      <button
-        onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center gap-2 rounded-lg p-2 text-gray-300 transition-colors hover:bg-gray-700 hover:text-white"
-      >
-        <div className="relative h-8 w-8 overflow-hidden rounded-full bg-gray-600">
-          {session.user.image ? (
-            <Image
-              src={session.user.image}
-              alt={userDisplayName}
-              width={32}
-              height={32}
-              className="h-full w-full object-cover"
-            />
-          ) : (
-            <div className="flex h-full w-full items-center justify-center text-sm font-medium text-white">
-              {userInitials}
-            </div>
-          )}
-        </div>
-        <span className="hidden text-sm font-medium md:block">
-          {userDisplayName}
-        </span>
-        <svg
-          className={`h-4 w-4 transition-transform ${isOpen ? "rotate-180" : ""}`}
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button
+          variant="ghost"
+          className={`h-auto p-2 hover:bg-gray-700 ${className}`}
         >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={2}
-            d="M19 9l-7 7-7-7"
-          />
-        </svg>
-      </button>
+          <div className="flex items-center gap-2">
+            <Avatar className="h-8 w-8">
+              <AvatarImage
+                src={session.user.image ?? undefined}
+                alt={userDisplayName}
+              />
+              <AvatarFallback className="bg-gray-600 text-sm text-white">
+                {userInitials}
+              </AvatarFallback>
+            </Avatar>
+            <span className="hidden text-sm font-medium text-gray-200 md:block">
+              {userDisplayName}
+            </span>
+            <ChevronDown className="h-4 w-4 text-gray-400" />
+          </div>
+        </Button>
+      </DropdownMenuTrigger>
 
-      {isOpen && (
-        <div className="absolute top-full right-0 z-50 mt-1 w-64 rounded-lg border border-gray-600 bg-gray-800 py-1 shadow-xl">
-          <div className="border-b border-gray-600 px-4 py-3">
-            <div className="flex items-center gap-3">
-              <div className="relative h-10 w-10 overflow-hidden rounded-full bg-gray-600">
-                {session.user.image ? (
-                  <Image
-                    src={session.user.image}
-                    alt={userDisplayName}
-                    width={40}
-                    height={40}
-                    className="h-full w-full object-cover"
-                  />
-                ) : (
-                  <div className="flex h-full w-full items-center justify-center text-sm font-medium text-white">
-                    {userInitials}
-                  </div>
-                )}
-              </div>
-              <div className="min-w-0 flex-1">
-                <p className="truncate text-sm font-medium text-white">
-                  {userDisplayName}
+      <DropdownMenuContent
+        className="w-64 border-gray-600 bg-gray-800"
+        align="end"
+      >
+        <DropdownMenuLabel className="text-gray-200">
+          <div className="flex items-center gap-3 py-2">
+            <Avatar className="h-10 w-10">
+              <AvatarImage
+                src={session.user.image ?? undefined}
+                alt={userDisplayName}
+              />
+              <AvatarFallback className="bg-gray-600 text-white">
+                {userInitials}
+              </AvatarFallback>
+            </Avatar>
+            <div className="min-w-0 flex-1">
+              <p className="truncate text-sm font-medium text-white">
+                {userDisplayName}
+              </p>
+              {session.user.email && (
+                <p className="truncate text-xs text-gray-400">
+                  {session.user.email}
                 </p>
-                {session.user.email && (
-                  <p className="truncate text-xs text-gray-400">
-                    {session.user.email}
-                  </p>
-                )}
-                {session.user.createdAt && (
-                  <p className="text-xs text-gray-500">
-                    Member since{" "}
-                    {new Date(session.user.createdAt).toLocaleDateString()}
-                  </p>
-                )}
-              </div>
+              )}
+              {session.user.createdAt && (
+                <p className="text-xs text-gray-500">
+                  Member since{" "}
+                  {new Date(session.user.createdAt).toLocaleDateString()}
+                </p>
+              )}
             </div>
           </div>
+        </DropdownMenuLabel>
 
-          <div className="py-1">
-            <button
-              onClick={handleSignOut}
-              className="flex w-full items-center gap-2 px-4 py-2 text-sm text-gray-300 transition-colors hover:bg-gray-700 hover:text-white"
-            >
-              <svg
-                className="h-4 w-4"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
-                />
-              </svg>
-              Sign Out
-            </button>
-          </div>
-        </div>
-      )}
-    </div>
+        <DropdownMenuSeparator className="bg-gray-600" />
+
+        <DropdownMenuItem
+          onClick={handleSignOut}
+          className="cursor-pointer text-gray-300 hover:bg-gray-700 hover:text-white focus:bg-gray-700 focus:text-white"
+        >
+          <LogOut className="mr-2 h-4 w-4" />
+          Sign Out
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
   );
 }

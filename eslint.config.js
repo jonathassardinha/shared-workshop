@@ -74,6 +74,14 @@ export default tseslint.config(
       ],
     },
   },
+  // Disable Tailwind CSS linting for shadcn/ui components
+  {
+    files: ["src/components/ui/**/*.{ts,tsx}"],
+    rules: {
+      "tailwindcss/classnames-order": "off",
+      "tailwindcss/no-custom-classname": "off",
+    },
+  },
   {
     linterOptions: {
       reportUnusedDisableDirectives: true,
