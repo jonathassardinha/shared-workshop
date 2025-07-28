@@ -22,18 +22,18 @@ Transition from mock authentication to real GitHub SSO with database persistence
 
 ### **Step 1: Environment Setup & GitHub OAuth App**
 
-- [ ] Create GitHub OAuth application in GitHub Developer Settings
-  - [ ] Navigate to GitHub Settings > Developer settings > OAuth Apps
-  - [ ] Create new OAuth App with appropriate name and description
-  - [ ] Set Authorization callback URL to `http://localhost:3000/api/auth/callback/github`
-  - [ ] Note down Client ID and generate Client Secret
-- [ ] Configure environment variables in `.env.local`:
-  - [ ] `GITHUB_CLIENT_ID` (from GitHub OAuth app)
-  - [ ] `GITHUB_CLIENT_SECRET` (from GitHub OAuth app)
-  - [ ] `NEXTAUTH_SECRET` (generate secure random string)
-  - [ ] `NEXTAUTH_URL` (http://localhost:3000 for dev)
-- [ ] Update `.env.example` with new variables (without actual values)
-- [ ] Test environment variable loading
+- [x] Create GitHub OAuth application in GitHub Developer Settings
+  - [x] Navigate to GitHub Settings > Developer settings > OAuth Apps
+  - [x] Create new OAuth App with name "Shared Workshop (dev)" for development
+  - [x] Set Authorization callback URL to `http://localhost:3000/api/auth/callback/github`
+  - [x] Note down Client ID and generate Client Secret
+- [x] Configure environment variables in `.env.local`:
+  - [x] `GITHUB_CLIENT_ID` (from GitHub OAuth app)
+  - [x] `GITHUB_CLIENT_SECRET` (from GitHub OAuth app)
+  - [x] `AUTH_SECRET` (generate secure random string)
+  - [x] `NEXTAUTH_URL` (http://localhost:3000 for dev)
+- [x] Update `.env.example` with new variables (without actual values)
+- [x] Test environment variable loading
 
 ### **Step 2: NextAuth Configuration Migration**
 
@@ -212,12 +212,40 @@ If issues arise during implementation:
    - [ ] Remove GitHub OAuth environment variables
    - [ ] Reset NextAuth configuration to previous state
 
+## OAuth App Strategy: Development vs Production
+
+### **Best Practice Approach**
+
+We're implementing separate GitHub OAuth applications for different environments:
+
+#### **Development App**: `Shared Workshop (dev)` ✅ CREATED
+
+- **Purpose**: Local development and testing
+- **Homepage URL**: `http://localhost:3000`
+- **Callback URL**: `http://localhost:3000/api/auth/callback/github`
+- **Environment Variables**: Used in `.env.local`
+
+#### **Production App**: `Shared Workshop` (Future)
+
+- **Purpose**: Production deployment
+- **Homepage URL**: `https://your-production-domain.com`
+- **Callback URL**: `https://your-production-domain.com/api/auth/callback/github`
+- **Environment Variables**: Used in production environment
+
+### **Benefits of This Approach**
+
+- **Security Isolation**: Dev credential compromise doesn't affect production
+- **Clean Analytics**: Development testing doesn't pollute production metrics
+- **Team Collaboration**: Dev credentials can be safely shared with team
+- **Environment-Specific URLs**: Each environment has correct callback URLs
+- **Testing Safety**: OAuth flow testing doesn't affect real users
+
 ## Notes & Decisions
 
-- **GitHub OAuth App**: [Record app name and settings when created]
+- **GitHub OAuth App**: Created "Shared Workshop (dev)" for development environment
 - **Migration Strategy**: [Document chosen approach for handling existing data]
-- **Development Setup**: [Note any special development configurations]
-- **Environment Variables**: [List all required variables and their purposes]
+- **Development Setup**: Using separate dev OAuth app for security isolation
+- **Environment Variables**: Development-specific credentials in .env.local
 
 ---
 
