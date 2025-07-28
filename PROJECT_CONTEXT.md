@@ -37,6 +37,20 @@ A coding exercise platform for frontend workshops with an in-browser multi-file 
 - **Utilities**: clsx, tailwind-merge, zod
 - **Logging**: Custom Logger utility (ClientLogger/ServerLogger)
 
+### Server Actions Architecture
+
+- **Server Actions Preferred**: Use Next.js Server Actions instead of API route handlers whenever possible
+- **Action Organization**: Store all server actions in `src/server/actions/` with domain-specific folders:
+  - `src/server/actions/workshop/` - Workshop-related actions (create, update, delete, etc.)
+  - `src/server/actions/user/` - User-related actions (profile, preferences, etc.)
+  - `src/server/actions/auth/` - Authentication-related actions
+- **Action Structure**: Each domain folder should contain:
+  - Separate files for different action types (create.ts, read.ts, update.ts, delete.ts)
+  - `types.ts` file for parameter types that client components can safely import
+  - **No barrel exports (index.ts)** to prevent accidental server/client code mixing
+- **Type Safety**: Client components import types from `types.ts`, server actions from specific action files
+- **Benefits**: Better performance, type safety, and simplified data mutations with built-in validation
+
 ### Architecture Structure
 
 ```
@@ -58,7 +72,22 @@ src/
 │   ├── auth/                   # Authentication utilities
 │   ├── constants.ts            # App constants
 │   └── Logger/                 # Logging system
-└── server/auth/                # NextAuth configuration
+└── server/
+    ├── actions/                # Server Actions (domain-organized)
+    │   ├── workshop/          # Workshop-related actions
+    │   │   ├── create.ts      # Create workshop action
+    │   │   ├── read.ts        # Read workshop actions
+    │   │   ├── update.ts      # Update workshop actions
+    │   │   ├── delete.ts      # Delete workshop action
+    │   │   └── types.ts       # Shared types for client components
+    │   ├── user/              # User-related actions
+    │   │   ├── profile.ts     # User profile actions
+    │   │   └── types.ts       # Shared types for client components
+    │   └── auth/              # Authentication actions
+    │       ├── session.ts     # Session-related actions
+    │       └── types.ts       # Shared types for client components
+    ├── auth/                  # NextAuth configuration
+    └── db.ts                  # Database client
 ```
 
 ### Editor System
