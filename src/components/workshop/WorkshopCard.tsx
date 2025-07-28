@@ -1,6 +1,7 @@
 import type { WorkshopStatus } from "@prisma/client";
 import type { WorkshopWithDetails } from "../../server/actions/workshop/workshop.types";
 import Link from "next/link";
+import { getOwnershipStatus } from "../../lib/auth/mock-user-utils";
 
 // Re-export WorkshopWithDetails type for convenience
 export type { WorkshopWithDetails };
@@ -33,6 +34,8 @@ export function WorkshopCard({
   workshop,
   showOwnership = false,
 }: WorkshopCardProps) {
+  const ownershipStatus = getOwnershipStatus(workshop.ownerId);
+
   return (
     <div className="rounded-lg border border-gray-700 bg-gray-800 p-6 transition-colors hover:border-gray-600">
       <div className="mb-4">
@@ -60,6 +63,11 @@ export function WorkshopCard({
           className={`inline-flex items-center rounded-full px-2 py-1 text-xs ${WorkshopStatusClasses[workshop.status]}`}
         >
           {getStatusLabel(workshop.status)}
+        </span>
+        <span
+          className={`inline-flex items-center rounded-full px-2 py-1 text-xs ${ownershipStatus.badgeClass}`}
+        >
+          {ownershipStatus.displayText}
         </span>
       </div>
 
