@@ -51,6 +51,16 @@ A coding exercise platform for frontend workshops with an in-browser multi-file 
 - **Type Safety**: Client components import types from `<domain>.types.ts`, server actions from specific action files
 - **Benefits**: Better performance, type safety, and simplified data mutations with built-in validation
 
+### Type System Guidelines
+
+- **Naming Convention**: Use Prisma's naming pattern - `TableCreateInput`, `TableUpdateInput`, not `CreateTableInput`
+- **No Simple Re-exports**: Don't re-export Prisma types without modifications (e.g., `export type WorkshopCreateInput = Prisma.WorkshopCreateInput` is prohibited)
+- **Update Types**: Don't add `id` fields to update input types - If we need to target specific items, add another `id` param to the function not the update object.
+- **Relational Queries**: Use `Prisma.<Table>GetPayload<{ include: { ... } }>` for complex queries with relations
+- **Custom Types Only**: Only define custom types when Prisma's auto-generated types cannot properly represent the data
+- **Utility Types**: Prefer `Pick`, `Partial`, and other utility types for creating subsets and variations
+- **Return type**: Always use `ActionResult<T>` type, if we only need the `success` property you can do `ActionResult<void>`
+
 ### Architecture Structure
 
 ```
@@ -223,8 +233,9 @@ Enable frontend workshop instructors to:
 - ✅ Type-safe server actions for all CRUD operations
 - ✅ Proper discriminated union ActionResult types
 - ✅ Domain-prefixed types files (workshop.types.ts, user.types.ts, auth.types.ts)
-- ✅ Simplified API input types that work with Prisma's complex generated types
+- ✅ Proper Prisma type usage (GetPayload for relations, direct Prisma inputs for actions)
 - ✅ Utility-type-based derivations (Partial, Pick) to prevent typos and maintain consistency
+- ✅ Type system guidelines enforced (no simple re-exports, proper naming conventions)
 
 **With Mock Data (Ready for Database):**
 
