@@ -6,6 +6,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
+import { InitialModel } from "@/app/client.utils";
 import { MIN_EXERCISES, MAX_EXERCISES } from "../../../lib/constants";
 import { useClientLogger } from "../../../lib/Logger/ClientLogger";
 import { createWorkshop } from "../../../server/actions/workshop/create";
@@ -83,7 +84,12 @@ export default function CreateWorkshopPage() {
           id: "1",
           title: "Getting Started",
           description: "Introduction exercise",
-          files: {},
+          files: {
+            "/App.tsx": {
+              language: "typescript",
+              model: InitialModel,
+            },
+          },
         },
       ],
     },
