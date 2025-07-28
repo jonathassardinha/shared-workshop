@@ -3,6 +3,7 @@ import GitHubProvider from "next-auth/providers/github";
 import { PrismaAdapter } from "@auth/prisma-adapter";
 import { db } from "../db";
 import { env } from "../../env.js";
+import { logAuthEvent, validateAuthConfig } from "../../lib/auth/config-utils";
 
 /**
  * Module augmentation for `next-auth` types. Allows us to add custom properties to the `session`
@@ -29,6 +30,20 @@ declare module "next-auth" {
   }
 }
 
+// Validate configuration on startup
+const configValidation = validateAuthConfig();
+if (!configValidation.isValid) {
+  console.error(
+    "❌ Authentication configuration errors:",
+    configValidation.errors,
+  );
+  throw new Error(
+    `Authentication configuration invalid: ${configValidation.errors.join(", ")}`,
+  );
+}
+
+logAuthEvent("Configuration validated successfully");
+
 /**
  * Options for NextAuth.js used to configure adapters, providers, callbacks, etc.
  *
@@ -53,14 +68,44 @@ export const authConfig = {
   ],
   adapter: PrismaAdapter(db),
   callbacks: {
-    session: ({ session, user }) => ({
-      ...session,
-      user: {
-        ...session.user,
-        id: user.id,
-        // GitHub user data will be stored in database
-      },
-    }),
+    session: ({ session, user }) => {
+      logAuthEvent("Session callback", {
+        userId: user.id,
+        userEmail: user.email,
+      });
+      return {
+        ...session,
+        user: {
+          ...session.user,
+          id: user.id,
+          // GitHub user data will be stored in database
+        },
+      };
+    },
+    signIn: ({ user, account }) => {
+      logAuthEvent("Sign in attempt", {
+        userId: user.id,
+        userEmail: user.email,
+        provider: account?.provider,
+      });
+      return true;
+    },
+  },
+  events: {
+    signIn: ({ user, account }) => {
+      logAuthEvent("Sign in successful", {
+        userId: user.id,
+        userEmail: user.email,
+        provider: account?.provider,
+      });
+    },
+    createUser: ({ user }) => {
+      logAuthEvent("User created", { userId: user.id, userEmail: user.email });
+    },
+  },
+  pages: {
+    error: "/auth/error",
+    signIn: "/auth/signin", // We'll create this in a later step
   },
   // Configure session strategy for database sessions
   session: {
@@ -68,7 +113,4 @@ export const authConfig = {
   },
   // Enable debug messages in development
   debug: process.env.NODE_ENV === "development",
-  pages: {
-    signIn: "/auth/signin", // We'll create this in a later step
-  },
 } satisfies NextAuthConfig;
