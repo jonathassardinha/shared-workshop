@@ -2,6 +2,8 @@
   "$schema": "https://turborepo.com/schema.json",
   "globalEnv": [
     "AUTH_SECRET",
+    "GITHUB_CLIENT_ID",
+    "GITHUB_CLIENT_SECRET",
     "DATABASE_URL",
     "NODE_ENV",
     "SKIP_ENV_VALIDATION",

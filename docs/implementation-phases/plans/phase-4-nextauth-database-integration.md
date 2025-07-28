@@ -37,15 +37,15 @@ Transition from mock authentication to real GitHub SSO with database persistence
 
 ### **Step 2: NextAuth Configuration Migration**
 
-- [ ] Update `src/server/auth/config.ts`:
-  - [ ] Uncomment and configure PrismaAdapter with database client
-  - [ ] Add GitHubProvider configuration with environment variables
-  - [ ] Remove CredentialsProvider with mock users
-  - [ ] Change session strategy from "jwt" to "database"
-  - [ ] Update callbacks to work with database sessions
-  - [ ] Remove mock-specific imports and code
-- [ ] Update TypeScript module augmentation if needed
-- [ ] Test configuration loads without errors
+- [x] Update `src/server/auth/config.ts`:
+  - [x] Uncomment and configure PrismaAdapter with database client
+  - [x] Add GitHubProvider configuration with environment variables
+  - [x] Remove CredentialsProvider with mock users
+  - [x] Change session strategy from "jwt" to "database"
+  - [x] Update callbacks to work with database sessions
+  - [x] Remove mock-specific imports and code
+- [x] Update environment variable validation (`src/env.js` and `turbo.json`)
+- [x] Test configuration loads without errors
 
 ### **Step 3: Authentication Components Update**
 

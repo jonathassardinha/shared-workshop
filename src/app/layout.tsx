@@ -28,8 +28,6 @@ export default function RootLayout({
           <JotaiProvider>
             <JotaiHydrator
               envVars={{
-                AUTH_SECRET: env.AUTH_SECRET,
-                DATABASE_URL: env.DATABASE_URL,
                 NODE_ENV: env.NODE_ENV,
                 REMOTE_LOGGER: env.REMOTE_LOGGER,
                 DEBUG_LOGGER: env.DEBUG_LOGGER,

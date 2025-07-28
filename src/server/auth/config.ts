@@ -1,10 +1,8 @@
 import { type DefaultSession, type NextAuthConfig } from "next-auth";
-import CredentialsProvider from "next-auth/providers/credentials";
-import { mockUsers } from "../../lib/auth/mockUsers";
-// import DiscordProvider from "next-auth/providers/discord";
-// Temporarily removed PrismaAdapter for mock authentication
-// import { PrismaAdapter } from "@auth/prisma-adapter";
-// import { db } from "../db";
+import GitHubProvider from "next-auth/providers/github";
+import { PrismaAdapter } from "@auth/prisma-adapter";
+import { db } from "../db";
+import { env } from "../../env.js";
 
 /**
  * Module augmentation for `next-auth` types. Allows us to add custom properties to the `session`
@@ -38,34 +36,9 @@ declare module "next-auth" {
  */
 export const authConfig = {
   providers: [
-    // Mock provider for development and testing
-    CredentialsProvider({
-      id: "mock",
-      name: "Mock Users (Development)",
-      credentials: {
-        userId: {
-          label: "Select User",
-          type: "text",
-          placeholder: "Enter user ID",
-        },
-      },
-      async authorize(credentials) {
-        if (!credentials?.userId) return null;
-
-        const mockUser = mockUsers.find(
-          (user) => user.id === credentials.userId,
-        );
-        if (!mockUser) return null;
-
-        // Return user object that matches our User interface
-        return {
-          id: mockUser.id,
-          name: mockUser.name,
-          email: mockUser.email,
-          image: mockUser.image,
-          createdAt: mockUser.createdAt,
-        };
-      },
+    GitHubProvider({
+      clientId: env.GITHUB_CLIENT_ID,
+      clientSecret: env.GITHUB_CLIENT_SECRET,
     }),
     // DiscordProvider,
     /**
@@ -78,29 +51,20 @@ export const authConfig = {
      * @see https://next-auth.js.org/providers/github
      */
   ],
-  // Temporarily removed adapter for mock authentication
-  // adapter: PrismaAdapter(db),
+  adapter: PrismaAdapter(db),
   callbacks: {
-    session: ({ session, token }) => ({
+    session: ({ session, user }) => ({
       ...session,
       user: {
         ...session.user,
-        id: token.sub ?? "",
-        createdAt: token.createdAt as string,
+        id: user.id,
+        // GitHub user data will be stored in database
       },
     }),
-    // Ensure user data includes all required fields
-    jwt: ({ token, user }) => {
-      if (user) {
-        token.sub = user.id;
-        token.createdAt = user.createdAt;
-      }
-      return token;
-    },
   },
-  // Configure session strategy for credentials provider
+  // Configure session strategy for database sessions
   session: {
-    strategy: "jwt",
+    strategy: "database",
   },
   // Enable debug messages in development
   debug: process.env.NODE_ENV === "development",
