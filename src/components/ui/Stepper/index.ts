@@ -1,5 +1,6 @@
-export { Stepper } from "./stepper";
-export { useStepper } from "./stepper.context";
+export { StepperContext, useStepper } from "./stepper.context";
+export { StepperProgress } from "./stepper.progress";
+export { StepperContent } from "./stepper.content";
 export {
   StepperNavigation,
   StepperBackButton,

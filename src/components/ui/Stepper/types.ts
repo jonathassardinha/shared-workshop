@@ -23,6 +23,7 @@ export interface StepperProps {
 }
 
 export interface StepperContextValue {
+  steps: StepConfig[];
   currentStep: number;
   totalSteps: number;
   isFirstStep: boolean;

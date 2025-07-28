@@ -1,9 +1,10 @@
 # Stepper Component
 
-A flexible, accessible stepper component for multi-step forms and wizards. The component is form-agnostic and validation-library agnostic, giving you full control over validation logic and form state management.
+A flexible, accessible, and fully composable stepper component for multi-step forms and wizards. The component is form-agnostic and validation-library agnostic, giving you full control over validation logic and form state management.
 
 ## Features
 
+- **Fully Composable**: Mix and match components to create custom layouts
 - **Form Agnostic**: Works with any form library (React Hook Form, Formik, etc.) or custom validation
 - **External Validation Control**: Parent component controls all validation logic
 - **Accessible**: Built with accessibility best practices
@@ -13,7 +14,9 @@ A flexible, accessible stepper component for multi-step forms and wizards. The c
 
 ## Components
 
-- `Stepper` - Main stepper container
+- `StepperContext` - Main context provider that manages stepper state
+- `StepperProgress` - Step indicators and progress visualization
+- `StepperContent` - Renders the current step's content
 - `StepperNavigation` - Container for navigation buttons
 - `StepperBackButton` - Previous step navigation
 - `StepperNextButton` - Next step navigation
@@ -24,7 +27,9 @@ A flexible, accessible stepper component for multi-step forms and wizards. The c
 ```tsx
 import { useState } from "react";
 import {
-  Stepper,
+  StepperContext,
+  StepperProgress,
+  StepperContent,
   StepperNavigation,
   StepperBackButton,
   StepperNextButton,
@@ -53,21 +58,24 @@ export function MultiStepForm() {
   ];
 
   return (
-    <form>
-      <Stepper
-        steps={steps}
-        currentStep={currentStep}
-        onStepChange={setCurrentStep}
-      />
+    <StepperContext
+      steps={steps}
+      currentStep={currentStep}
+      onStepChange={setCurrentStep}
+    >
+      <StepperProgress />
+      <StepperContent />
 
-      <StepperNavigation>
-        <StepperBackButton />
-        <div className="flex gap-2">
-          <StepperNextButton />
-          <StepperSubmitButton />
-        </div>
-      </StepperNavigation>
-    </form>
+      <form>
+        <StepperNavigation>
+          <StepperBackButton />
+          <div className="flex gap-2">
+            <StepperNextButton />
+            <StepperSubmitButton />
+          </div>
+        </StepperNavigation>
+      </form>
+    </StepperContext>
   );
 }
 ```
@@ -140,32 +148,75 @@ export function ValidatedMultiStepForm() {
   ];
 
   return (
-    <form onSubmit={form.handleSubmit(onSubmit)}>
-      <Stepper
-        steps={steps}
-        currentStep={currentStep}
-        onStepChange={setCurrentStep}
-        onBeforeStepChange={handleBeforeStepChange}
-        isValid={form.formState.isValid}
+    <StepperContext
+      steps={steps}
+      currentStep={currentStep}
+      onStepChange={setCurrentStep}
+      onBeforeStepChange={handleBeforeStepChange}
+    >
+      <StepperProgress
         showStepNumbers={true}
         showConnectors={true}
+        allowSkipSteps={false}
       />
 
-      <StepperNavigation className="mt-8">
+      <StepperContent className="my-8" />
+
+      <form onSubmit={form.handleSubmit(onSubmit)}>
+        <StepperNavigation className="mt-8">
+          <StepperBackButton />
+          <div className="flex gap-2">
+            <StepperNextButton />
+            <StepperSubmitButton>Complete Setup</StepperSubmitButton>
+          </div>
+        </StepperNavigation>
+      </form>
+    </StepperContext>
+  );
+}
+```
+
+## Custom Layouts
+
+The composable nature allows for flexible layouts:
+
+```tsx
+export function CustomStepperLayout() {
+  return (
+    <StepperContext
+      steps={steps}
+      currentStep={currentStep}
+      onStepChange={setCurrentStep}
+    >
+      {/* Header with progress */}
+      <div className="mb-6 rounded-lg bg-gray-50 p-4">
+        <StepperProgress showConnectors={false} />
+      </div>
+
+      {/* Main content area */}
+      <div className="min-h-[400px] rounded-lg border p-6">
+        <StepperContent />
+      </div>
+
+      {/* Footer with navigation */}
+      <div className="mt-6 flex items-center justify-between border-t pt-4">
         <StepperBackButton />
+        <div className="text-sm text-gray-500">
+          Step {currentStep} of {steps.length}
+        </div>
         <div className="flex gap-2">
           <StepperNextButton />
-          <StepperSubmitButton>Complete Setup</StepperSubmitButton>
+          <StepperSubmitButton />
         </div>
-      </StepperNavigation>
-    </form>
+      </div>
+    </StepperContext>
   );
 }
 ```
 
 ## API Reference
 
-### Stepper Props
+### StepperContext Props
 
 ```typescript
 interface StepperProps {
@@ -181,6 +232,7 @@ interface StepperProps {
   allowSkipSteps?: boolean;
   showStepNumbers?: boolean;
   showConnectors?: boolean;
+  children: ReactNode;
 }
 ```
 
@@ -197,6 +249,26 @@ interface StepperProps {
 | `allowSkipSteps`     | `boolean`                                                          | `false`  | Allow clicking on future steps                            |
 | `showStepNumbers`    | `boolean`                                                          | `true`   | Show step numbers in indicators                           |
 | `showConnectors`     | `boolean`                                                          | `true`   | Show connecting lines between steps                       |
+| `children`           | `ReactNode`                                                        | Required | Child components to render                                |
+
+### StepperProgress Props
+
+```typescript
+interface StepperProgressProps {
+  className?: string;
+  allowSkipSteps?: boolean;
+  showStepNumbers?: boolean;
+  showConnectors?: boolean;
+}
+```
+
+### StepperContent Props
+
+```typescript
+interface StepperContentProps {
+  className?: string;
+}
+```
 
 ### StepConfig
 
@@ -231,21 +303,28 @@ The Stepper components use Tailwind CSS classes and can be customized by:
 ### Example Customization
 
 ```tsx
-<Stepper
-  className="bg-gray-50 p-6 rounded-lg"
+<StepperContext
   steps={steps}
   currentStep={currentStep}
   onStepChange={setCurrentStep}
-/>
+>
+  <StepperProgress
+    className="rounded-lg bg-gray-50 p-6"
+    showStepNumbers={true}
+    showConnectors={true}
+  />
 
-<StepperNavigation className="justify-center gap-4">
-  <StepperBackButton className="bg-gray-200 text-gray-800">
-    Previous
-  </StepperBackButton>
-  <StepperNextButton className="bg-blue-600 text-white">
-    Continue
-  </StepperNextButton>
-</StepperNavigation>
+  <StepperContent className="min-h-[500px] p-6" />
+
+  <StepperNavigation className="justify-center gap-4">
+    <StepperBackButton className="bg-gray-200 text-gray-800">
+      Previous
+    </StepperBackButton>
+    <StepperNextButton className="bg-blue-600 text-white">
+      Continue
+    </StepperNextButton>
+  </StepperNavigation>
+</StepperContext>
 ```
 
 ## Accessibility
@@ -265,6 +344,7 @@ The Stepper component follows accessibility best practices:
 4. **Save progress**: Consider auto-saving form data between steps
 5. **Provide feedback**: Show loading states during async validation
 6. **Plan for errors**: Handle validation errors gracefully with clear messaging
+7. **Flexible layouts**: Use the composable nature to create custom layouts that fit your design
 
 ## Integration Examples
 
