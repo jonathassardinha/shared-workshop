@@ -41,14 +41,14 @@ Implement traditional pagination and basic client-side optimizations for the wor
 
 ### **Step 1: Server-Side Pagination Implementation**
 
-- [ ] Update `getWorkshops()` server action:
-  - [ ] Add pagination parameters (`page`, `limit`, `offset`)
-  - [ ] Return total count for pagination calculations
-  - [ ] Maintain existing filtering and search functionality
-  - [ ] Add proper Prisma pagination queries
-- [ ] Update `GetWorkshopsFilter` type to include pagination
-- [ ] Test server action with different page sizes and filters
-- [ ] Ensure pagination works with existing search and status filters
+- [x] Update `getWorkshops()` server action:
+  - [x] Add pagination parameters (`page`, `limit`, `offset`)
+  - [x] Return total count for pagination calculations
+  - [x] Maintain existing filtering and search functionality
+  - [x] Add proper Prisma pagination queries (`skip`, `take`)
+- [x] Update `GetWorkshopsFilter` type to include pagination
+- [x] Test server action with different page sizes and filters
+- [x] Ensure pagination works with existing search and status filters
 
 ### **Step 2: Client-Side Pagination Component**
 

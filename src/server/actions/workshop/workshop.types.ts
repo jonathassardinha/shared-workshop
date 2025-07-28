@@ -47,10 +47,19 @@ export interface GetWorkshopsFilter {
   ownerId?: string;
   status?: Workshop["status"];
   search?: string;
+  // Pagination parameters
+  page?: number;
+  limit?: number;
 }
 
 // Query result with pagination
 export interface WorkshopQueryResult {
   workshops: WorkshopWithDetails[];
   totalCount: number;
+  // Pagination metadata
+  currentPage: number;
+  totalPages: number;
+  hasNextPage: boolean;
+  hasPreviousPage: boolean;
+  pageSize: number;
 }

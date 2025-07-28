@@ -10,14 +10,20 @@ import type {
 } from "./workshop.types";
 import { auth } from "../../auth";
 import { db } from "../../db";
+import { ServerLogger } from "../../../lib/Logger/ServerLogger";
 
 /**
- * Gets workshops with filtering and user ownership context
+ * Gets workshops with filtering, pagination, and user ownership context
  */
 export async function getWorkshops(
   filter: GetWorkshopsFilter = {},
 ): Promise<ActionResult<WorkshopQueryResult>> {
   try {
+    // Pagination parameters with defaults
+    const page = Math.max(1, filter.page ?? 1);
+    const limit = Math.max(1, Math.min(100, filter.limit ?? 20)); // Limit between 1-100
+    const skip = (page - 1) * limit;
+
     const where: {
       ownerId?: string;
       status?: Workshop["status"];
@@ -43,6 +49,7 @@ export async function getWorkshops(
       ];
     }
 
+    // Get workshops with pagination
     const workshops = await db.workshop.findMany({
       where,
       include: {
@@ -56,6 +63,8 @@ export async function getWorkshops(
       orderBy: {
         createdAt: "desc",
       },
+      skip,
+      take: limit,
     });
 
     const workshopsWithDetails: WorkshopWithDetails[] = workshops.map(
@@ -66,17 +75,28 @@ export async function getWorkshops(
       }),
     );
 
+    // Get total count for pagination calculations
     const totalCount = await db.workshop.count({ where });
+
+    // Calculate pagination metadata
+    const totalPages = Math.ceil(totalCount / limit);
+    const hasNextPage = page < totalPages;
+    const hasPreviousPage = page > 1;
 
     return {
       success: true,
       data: {
         workshops: workshopsWithDetails,
         totalCount,
+        currentPage: page,
+        totalPages,
+        hasNextPage,
+        hasPreviousPage,
+        pageSize: limit,
       },
     };
   } catch (error) {
-    console.error("Failed to get workshops:", error);
+    ServerLogger.error("Failed to get workshops:", error);
     return { success: false, error: "Failed to load workshops" };
   }
 }
@@ -115,7 +135,7 @@ export async function getWorkshopById(
 
     return { success: true, data: workshop };
   } catch (error) {
-    console.error("Failed to get workshop:", error);
+    ServerLogger.error("Failed to get workshop:", error);
     return { success: false, error: "Failed to load workshop" };
   }
 }
@@ -143,7 +163,7 @@ export async function getMyWorkshops(): Promise<
 
     return { success: true, data: result.data.workshops };
   } catch (error) {
-    console.error("Failed to get user workshops:", error);
+    ServerLogger.error("Failed to get user workshops:", error);
     return { success: false, error: "Failed to load your workshops" };
   }
 }
