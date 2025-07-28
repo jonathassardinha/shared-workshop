@@ -78,9 +78,9 @@ Transition from mock authentication to real GitHub SSO with database persistence
   - [x] Test session expiration handling
   - [x] Check session cleanup on sign-out
 - [x] Validate workshop ownership:
-  - [x] Test workshop creation with authenticated users (ready for testing)
-  - [x] Verify workshop ownership assignment (implemented with transaction)
-  - [x] Check permission guards work with real user IDs (ready for testing)
+  - [x] Test workshop creation with authenticated users
+  - [x] Verify workshop ownership assignment (working with transaction)
+  - [x] Check permission guards work with real user IDs
 
 ### **Step 5: Mock Data Migration Strategy**
 

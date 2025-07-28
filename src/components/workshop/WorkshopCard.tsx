@@ -1,33 +1,31 @@
+import type { WorkshopStatus } from "@prisma/client";
+import type { WorkshopWithDetails } from "../../server/actions/workshop/workshop.types";
 import Link from "next/link";
-import { type Workshop } from "../../lib/auth/ownership";
 
-// Re-export Workshop type for convenience
-export type { Workshop };
-
-// Remove duplicate Workshop interface since it's now defined in ownership.ts
-export type WorkshopStatus = "planned" | "live" | "completed";
+// Re-export WorkshopWithDetails type for convenience
+export type { WorkshopWithDetails };
 
 function getStatusLabel(status: WorkshopStatus): string {
   switch (status) {
-    case "planned":
+    case "PLANNED":
       return "Planned";
-    case "live":
+    case "LIVE":
       return "Live";
-    case "completed":
+    case "COMPLETED":
       return "Completed";
     default:
       return "Unknown";
   }
 }
 
-export const WORKSHOP_STATUS_COLORS = {
-  live: "bg-green-100 text-green-800",
-  planned: "bg-blue-100 text-blue-800",
-  completed: "bg-gray-100 text-gray-800",
-} as const;
+export const WorkshopStatusClasses = {
+  LIVE: " bg-green-100 text-green-800",
+  PLANNED: "bg-blue-100 text-blue-800",
+  COMPLETED: "bg-gray-100 text-gray-800",
+} satisfies Record<WorkshopStatus, string>;
 
 interface WorkshopCardProps {
-  workshop: Workshop;
+  workshop: WorkshopWithDetails;
   showOwnership?: boolean;
 }
 
@@ -59,14 +57,14 @@ export function WorkshopCard({
 
       <div className="mb-4 flex items-center gap-2">
         <span
-          className={`inline-flex items-center rounded-full px-2 py-1 text-xs ${WORKSHOP_STATUS_COLORS[workshop.status]}`}
+          className={`inline-flex items-center rounded-full px-2 py-1 text-xs ${WorkshopStatusClasses[workshop.status]}`}
         >
           {getStatusLabel(workshop.status)}
         </span>
       </div>
 
       <div className="flex gap-2">
-        {workshop.status === "live" && (
+        {workshop.status === "LIVE" && (
           <Link
             href={`/workshop/${workshop.id}/live`}
             className="flex-1 rounded bg-green-600 px-4 py-2 text-center text-sm text-white transition-colors hover:bg-green-700"
@@ -74,7 +72,7 @@ export function WorkshopCard({
             Join Live Workshop
           </Link>
         )}
-        {workshop.status === "planned" && (
+        {workshop.status === "PLANNED" && (
           <Link
             href={`/workshop/${workshop.id}/live`}
             className="flex-1 rounded bg-blue-600 px-4 py-2 text-center text-sm text-white transition-colors hover:bg-blue-700"
