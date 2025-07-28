@@ -14,11 +14,15 @@
     "db:migrate": "prisma migrate deploy",
     "db:push": "prisma db push",
     "db:studio": "prisma studio",
+    "db:seed": "tsx prisma/seed.ts",
     "dev": "next dev --turbo",
     "postinstall": "prisma generate",
     "preview": "next build && next start",
     "start": "next start",
     "typecheck": "tsc --noEmit"
+  },
+  "prisma": {
+    "seed": "tsx prisma/seed.ts"
   },
   "dependencies": {
     "@auth/prisma-adapter": "^2.7.2",
@@ -64,6 +68,7 @@
     "prettier-plugin-tailwindcss": "^0.6.11",
     "prisma": "^6.5.0",
     "tailwindcss": "^4.1.11",
+    "tsx": "^4.20.3",
     "turbo": "2.5.4",
     "typescript": "^5.8.2",
     "typescript-eslint": "^8.27.0"
