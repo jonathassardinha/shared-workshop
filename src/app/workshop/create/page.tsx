@@ -4,8 +4,11 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
+import { useRouter } from "next/navigation";
+import { useSession } from "next-auth/react";
 import { MIN_EXERCISES, MAX_EXERCISES } from "../../../lib/constants";
 import { useClientLogger } from "../../../lib/Logger/ClientLogger";
+import { createWorkshop } from "../../../server/actions/workshop/create";
 import {
   StepperContext,
   StepperProgress,
@@ -61,10 +64,13 @@ const createWorkshopSchema = workshopDetailsSchema.merge(exercisesSchema);
 type CreateWorkshopFormData = z.infer<typeof createWorkshopSchema>;
 
 export default function CreateWorkshopPage() {
+  const { data: session, status } = useSession();
   const [currentStep, setCurrentStep] = useState(1);
   const [isCreating, setIsCreating] = useState(false);
   const [currentExerciseIndex, setCurrentExerciseIndex] = useState(0);
+  const [error, setError] = useState<string | null>(null);
   const logger = useClientLogger();
+  const router = useRouter();
 
   const form = useForm<CreateWorkshopFormData>({
     resolver: zodResolver(createWorkshopSchema),
@@ -181,16 +187,47 @@ export default function CreateWorkshopPage() {
 
   const handleCreateWorkshop = async (data: CreateWorkshopFormData) => {
     setIsCreating(true);
+    setError(null);
+
     try {
       logger.info("Creating workshop...", data);
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 2000));
-      alert(
-        "Workshop created! (This will redirect to the workshop page in future phases)",
-      );
+
+      // Prepare exercises data with proper order and file content
+      const exercisesData = data.exercises.map((exercise, index) => ({
+        title: exercise.title,
+        description: exercise.description,
+        order: index + 1, // 1-based ordering
+        files: Object.entries(exercise.files).reduce(
+          (acc, [filename, fileInfo]) => {
+            acc[filename] = {
+              language: fileInfo.language,
+              content: fileInfo.model, // The actual file content
+            };
+            return acc;
+          },
+          {} as Record<string, { language: string; content: string }>,
+        ),
+      }));
+
+      const result = await createWorkshop({
+        title: data.title,
+        description: data.description,
+        exercises: exercisesData,
+      });
+
+      if (result.success) {
+        logger.info("Workshop created successfully:", result.data);
+        // Redirect to workshops list or the created workshop
+        router.push("/workshops");
+      } else {
+        setError(result.error);
+        logger.error("Failed to create workshop:", result.error);
+      }
     } catch (error) {
+      const errorMessage =
+        "An unexpected error occurred while creating the workshop";
+      setError(errorMessage);
       logger.error("Error creating workshop:", error);
-      alert("Error creating workshop. Please try again.");
     } finally {
       setIsCreating(false);
     }
@@ -236,6 +273,44 @@ export default function CreateWorkshopPage() {
     },
   ];
 
+  // Show loading while checking authentication
+  if (status === "loading") {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-gradient-to-b from-[#18181b] to-[#1b1b1c] text-white">
+        <div className="text-center">
+          <div className="mx-auto mb-4 h-8 w-8 animate-spin rounded-full border-2 border-white border-t-transparent"></div>
+          <p>Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Require authentication
+  if (!session?.user) {
+    return (
+      <div className="min-h-screen bg-gradient-to-b from-[#18181b] to-[#1b1b1c] text-white">
+        <div className="mx-auto max-w-7xl px-4 py-8">
+          <div className="flex items-center justify-center">
+            <div className="w-full max-w-md rounded-lg border border-gray-600 bg-gray-800 p-6 text-center">
+              <h1 className="mb-4 text-xl font-bold text-white">
+                Authentication Required
+              </h1>
+              <p className="mb-4 text-gray-400">
+                Please sign in to create a workshop.
+              </p>
+              <a
+                href="/workshops"
+                className="inline-block rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-blue-700"
+              >
+                Go to Workshops
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-[#18181b] to-[#1b1b1c] text-white">
       <div className="mx-auto max-w-7xl px-4 py-8">
@@ -250,6 +325,12 @@ export default function CreateWorkshopPage() {
           <StepperContent />
 
           <form onSubmit={form.handleSubmit(handleCreateWorkshop)}>
+            {error && (
+              <div className="mt-4 rounded-md border border-red-500 bg-red-500/10 p-3">
+                <p className="text-sm text-red-400">{error}</p>
+              </div>
+            )}
+
             <div className="mt-8">
               <StepperNavigation>
                 <StepperBackButton />

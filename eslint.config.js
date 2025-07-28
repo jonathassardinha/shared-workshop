@@ -56,7 +56,7 @@ export default tseslint.config(
           callees: ["cva", "cn"],
         },
       ],
-      "no-console": ["error", { allow: ["error"] }],
+      "no-console": ["error"],
       "@typescript-eslint/array-type": "off",
       "@typescript-eslint/consistent-type-definitions": "off",
       "@typescript-eslint/consistent-type-imports": [

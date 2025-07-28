@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { useSession, signIn } from "next-auth/react";
 import { useState } from "react";
 import { Github, Loader2 } from "lucide-react";
+import { useClientLogger } from "@/lib/Logger/ClientLogger";
 import { cn } from "../lib/cn";
 import { useCreationPermissions } from "../hooks/useOwnership";
 import { UserProfile } from "./auth";
@@ -14,6 +15,7 @@ export function Navigation() {
   const { data: session, status } = useSession();
   const { canCreate } = useCreationPermissions();
   const [isSigningIn, setIsSigningIn] = useState(false);
+  const logger = useClientLogger();
 
   const isActive = (path: string) => {
     if (path === "/workshops") {
@@ -29,7 +31,7 @@ export function Navigation() {
         redirect: false,
       });
     } catch (error) {
-      console.error("Failed to sign in:", error);
+      logger.error("Failed to sign in:", error);
     } finally {
       setIsSigningIn(false);
     }

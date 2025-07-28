@@ -4,47 +4,100 @@ import type { ActionResult } from "../../../lib/types";
 import type { WorkshopWithDetails } from "./workshop.types";
 import type { Prisma } from "@prisma/client";
 import { revalidatePath } from "next/cache";
+import { ServerLogger } from "@/lib/Logger/ServerLogger";
 import { auth } from "../../auth";
 import { db } from "../../db";
 
+// Type for complete workshop creation with exercises and files
+interface CreateWorkshopWithExercisesInput {
+  title: string;
+  description: string;
+  status?: "PLANNED" | "LIVE" | "COMPLETED";
+  exercises: Array<{
+    title: string;
+    description: string;
+    order: number;
+    files: Record<string, { language: string; content: string }>;
+  }>;
+}
+
 /**
- * Creates a new workshop
+ * Creates a complete workshop with exercises and files
  */
 export async function createWorkshop(
-  input: Prisma.WorkshopCreateInput,
+  input: CreateWorkshopWithExercisesInput,
 ): Promise<ActionResult<WorkshopWithDetails>> {
   try {
     const session = await auth();
+
     if (!session?.user?.id) {
       return { success: false, error: "Authentication required" };
     }
 
-    const workshop = await db.workshop.create({
-      data: {
-        title: input.title,
-        description: input.description,
-        ownerId: session.user.id,
-      },
-      include: {
-        owner: {
-          select: {
-            name: true,
+    // Create everything in a transaction to ensure consistency
+    const result = await db.$transaction(async (tx) => {
+      // 1. Create the workshop
+      const workshop = await tx.workshop.create({
+        data: {
+          title: input.title,
+          description: input.description,
+          status: input.status ?? "PLANNED",
+          ownerId: session.user.id!,
+        },
+      });
+
+      // 2. Create exercises and files
+      for (const exerciseData of input.exercises) {
+        const exercise = await tx.exercise.create({
+          data: {
+            title: exerciseData.title,
+            description: exerciseData.description,
+            order: exerciseData.order,
+            workshopId: workshop.id,
+          },
+        });
+
+        // 3. Create files for this exercise
+        for (const [filename, fileData] of Object.entries(exerciseData.files)) {
+          await tx.workshopFile.create({
+            data: {
+              filename,
+              content: fileData.content,
+              language: fileData.language,
+              exerciseId: exercise.id,
+            },
+          });
+        }
+      }
+
+      // Return workshop with full details
+      return await tx.workshop.findUnique({
+        where: { id: workshop.id },
+        include: {
+          owner: {
+            select: {
+              name: true,
+            },
+          },
+          exercises: {
+            include: {
+              files: true,
+            },
           },
         },
-        exercises: true,
-      },
+      });
     });
 
     const workshopWithDetails: WorkshopWithDetails = {
-      ...workshop,
-      ownerName: workshop.owner.name ?? "Unknown",
-      exerciseCount: workshop.exercises.length,
+      ...result!,
+      ownerName: result!.owner.name ?? "Unknown",
+      exerciseCount: result!.exercises.length,
     };
 
     revalidatePath("/workshops");
     return { success: true, data: workshopWithDetails };
   } catch (error) {
-    console.error("Failed to create workshop:", error);
+    ServerLogger.error("Failed to create workshop:", error);
     return { success: false, error: "Failed to create workshop" };
   }
 }
@@ -86,7 +139,7 @@ export async function createExercise(
     revalidatePath(`/workshop/${workshopId}`);
     return { success: true, data: exercise };
   } catch (error) {
-    console.error("Failed to create exercise:", error);
+    ServerLogger.error("Failed to create exercise:", error);
     return { success: false, error: "Failed to create exercise" };
   }
 }
@@ -145,7 +198,7 @@ export async function createWorkshopFile(
     revalidatePath(`/workshop/${exercise.workshop.id}`);
     return { success: true, data: file };
   } catch (error) {
-    console.error("Failed to create workshop file:", error);
+    ServerLogger.error("Failed to create workshop file:", error);
     return { success: false, error: "Failed to create file" };
   }
 }
