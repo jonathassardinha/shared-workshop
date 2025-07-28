@@ -1,8 +1,7 @@
 "use server";
 
 import type { ActionResult } from "../../../lib/types";
-import type { SignInInput, SessionInfo, AuthStatusResult } from "./types";
-import { redirect } from "next/navigation";
+import type { SignInInput, SessionInfo, AuthStatusResult } from "./auth.types";
 import { auth, signIn, signOut } from "../../auth";
 
 /**

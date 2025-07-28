@@ -6,8 +6,8 @@ import type {
   GetWorkshopsFilter,
   WorkshopQueryResult,
   WorkshopWithDetails,
-  WorkshopWithExercises,
-} from "./types";
+  WorkshopWithOwnerAndExercises,
+} from "./workshop.types";
 import { auth } from "../../auth";
 import { db } from "../../db";
 
@@ -18,8 +18,6 @@ export async function getWorkshops(
   filter: GetWorkshopsFilter = {},
 ): Promise<ActionResult<WorkshopQueryResult>> {
   try {
-    const session = await auth();
-
     const where: {
       ownerId?: string;
       status?: Workshop["status"];
@@ -88,10 +86,8 @@ export async function getWorkshops(
  */
 export async function getWorkshopById(
   id: string,
-): Promise<ActionResult<WorkshopWithExercises>> {
+): Promise<ActionResult<WorkshopWithOwnerAndExercises>> {
   try {
-    const session = await auth();
-
     const workshop = await db.workshop.findUnique({
       where: { id },
       include: {

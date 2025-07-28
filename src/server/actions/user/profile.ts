@@ -1,11 +1,11 @@
 "use server";
 
-import type { ActionResult } from "../../../lib/types";
+import type { ActionResult } from "@/lib/types";
 import type {
   UpdateUserProfileInput,
   UserProfile,
   UserWithStats,
-} from "./types";
+} from "./user.types";
 import { revalidatePath } from "next/cache";
 import { auth } from "../../auth";
 import { db } from "../../db";

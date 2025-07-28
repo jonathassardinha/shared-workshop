@@ -4,14 +4,13 @@
 import type { User } from "@prisma/client";
 
 // =================================================================
-// INPUT TYPES (simplified for our API)
+// API INPUT TYPES (simplified for our server actions)
 // =================================================================
 
-export interface UpdateUserProfileInput {
-  name?: string;
-  email?: string;
-  image?: string;
-}
+// Update input derived from User type using utility types
+export type UpdateUserProfileInput = Partial<
+  Pick<User, "name" | "email" | "image">
+>;
 
 // =================================================================
 // APPLICATION-SPECIFIC TYPES

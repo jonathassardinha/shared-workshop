@@ -1,12 +1,8 @@
 "use server";
 
 import type { ActionResult } from "../../../lib/types";
-import type {
-  CreateWorkshopInput,
-  CreateExerciseInput,
-  CreateWorkshopFileInput,
-  WorkshopWithDetails,
-} from "./types";
+import type { WorkshopWithDetails } from "./workshop.types";
+import type { Prisma } from "@prisma/client";
 import { revalidatePath } from "next/cache";
 import { auth } from "../../auth";
 import { db } from "../../db";
@@ -15,7 +11,7 @@ import { db } from "../../db";
  * Creates a new workshop
  */
 export async function createWorkshop(
-  input: CreateWorkshopInput,
+  input: Prisma.WorkshopCreateInput,
 ): Promise<ActionResult<WorkshopWithDetails>> {
   try {
     const session = await auth();
@@ -57,7 +53,8 @@ export async function createWorkshop(
  * Creates a new exercise for a workshop
  */
 export async function createExercise(
-  input: CreateExerciseInput,
+  workshopId: string,
+  input: Prisma.ExerciseCreateInput,
 ): Promise<ActionResult<unknown>> {
   try {
     const session = await auth();
@@ -68,7 +65,7 @@ export async function createExercise(
     // Verify user owns the workshop
     const workshop = await db.workshop.findFirst({
       where: {
-        id: input.workshopId,
+        id: workshopId,
         ownerId: session.user.id,
       },
     });
@@ -82,11 +79,11 @@ export async function createExercise(
         title: input.title,
         description: input.description,
         order: input.order,
-        workshopId: input.workshopId,
+        workshopId,
       },
     });
 
-    revalidatePath(`/workshop/${input.workshopId}`);
+    revalidatePath(`/workshop/${workshopId}`);
     return { success: true, data: exercise };
   } catch (error) {
     console.error("Failed to create exercise:", error);
@@ -98,7 +95,8 @@ export async function createExercise(
  * Creates a new file for an exercise
  */
 export async function createWorkshopFile(
-  input: CreateWorkshopFileInput,
+  exerciseId: string,
+  input: Prisma.WorkshopFileCreateInput,
 ): Promise<ActionResult<unknown>> {
   try {
     const session = await auth();
@@ -109,7 +107,7 @@ export async function createWorkshopFile(
     // Verify user owns the workshop through the exercise
     const exercise = await db.exercise.findFirst({
       where: {
-        id: input.exerciseId,
+        id: exerciseId,
         workshop: {
           ownerId: session.user.id,
         },
@@ -126,7 +124,7 @@ export async function createWorkshopFile(
     // Check for duplicate filename
     const existingFile = await db.workshopFile.findFirst({
       where: {
-        exerciseId: input.exerciseId,
+        exerciseId,
         filename: input.filename,
       },
     });
@@ -140,7 +138,7 @@ export async function createWorkshopFile(
         filename: input.filename,
         content: input.content,
         language: input.language,
-        exerciseId: input.exerciseId,
+        exerciseId,
       },
     });
 

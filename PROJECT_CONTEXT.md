@@ -46,9 +46,9 @@ A coding exercise platform for frontend workshops with an in-browser multi-file 
   - `src/server/actions/auth/` - Authentication-related actions
 - **Action Structure**: Each domain folder should contain:
   - Separate files for different action types (create.ts, read.ts, update.ts, delete.ts)
-  - `types.ts` file for parameter types that client components can safely import
+  - `<domain>.types.ts` file for parameter types that client components can safely import
   - **No barrel exports (index.ts)** to prevent accidental server/client code mixing
-- **Type Safety**: Client components import types from `types.ts`, server actions from specific action files
+- **Type Safety**: Client components import types from `<domain>.types.ts`, server actions from specific action files
 - **Benefits**: Better performance, type safety, and simplified data mutations with built-in validation
 
 ### Architecture Structure
@@ -79,13 +79,13 @@ src/
     │   │   ├── read.ts        # Read workshop actions
     │   │   ├── update.ts      # Update workshop actions
     │   │   ├── delete.ts      # Delete workshop action
-    │   │   └── types.ts       # Shared types for client components
+    │   │   └── workshop.types.ts  # Shared types for client components
     │   ├── user/              # User-related actions
     │   │   ├── profile.ts     # User profile actions
-    │   │   └── types.ts       # Shared types for client components
+    │   │   └── user.types.ts  # Shared types for client components
     │   └── auth/              # Authentication actions
     │       ├── session.ts     # Session-related actions
-    │       └── types.ts       # Shared types for client components
+    │       └── auth.types.ts  # Shared types for client components
     ├── auth/                  # NextAuth configuration
     └── db.ts                  # Database client
 ```
@@ -222,6 +222,9 @@ Enable frontend workshop instructors to:
 - ✅ Complete database schema (Workshop, Exercise, WorkshopFile models)
 - ✅ Type-safe server actions for all CRUD operations
 - ✅ Proper discriminated union ActionResult types
+- ✅ Domain-prefixed types files (workshop.types.ts, user.types.ts, auth.types.ts)
+- ✅ Simplified API input types that work with Prisma's complex generated types
+- ✅ Utility-type-based derivations (Partial, Pick) to prevent typos and maintain consistency
 
 **With Mock Data (Ready for Database):**
 

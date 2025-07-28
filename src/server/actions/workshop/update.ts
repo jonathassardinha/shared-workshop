@@ -1,12 +1,7 @@
 "use server";
 
 import type { ActionResult } from "../../../lib/types";
-import type { WorkshopStatus } from "@prisma/client";
-import type {
-  UpdateWorkshopInput,
-  UpdateExerciseInput,
-  UpdateWorkshopFileInput,
-} from "./types";
+import type { Prisma, WorkshopStatus } from "@prisma/client";
 import { revalidatePath } from "next/cache";
 import { auth } from "../../auth";
 import { db } from "../../db";
@@ -15,7 +10,8 @@ import { db } from "../../db";
  * Updates a workshop (only by owner)
  */
 export async function updateWorkshop(
-  input: UpdateWorkshopInput,
+  workshopId: string,
+  input: Prisma.WorkshopUpdateInput,
 ): Promise<ActionResult<unknown>> {
   try {
     const session = await auth();
@@ -26,7 +22,7 @@ export async function updateWorkshop(
     // Verify ownership
     const existingWorkshop = await db.workshop.findFirst({
       where: {
-        id: input.id,
+        id: workshopId,
         ownerId: session.user.id,
       },
     });
@@ -36,23 +32,19 @@ export async function updateWorkshop(
     }
 
     // Build update data
-    const updateData: {
-      title?: string;
-      description?: string;
-      status?: WorkshopStatus;
-    } = {};
+    const updateData: Prisma.WorkshopUpdateInput = {};
     if (input.title !== undefined) updateData.title = input.title;
     if (input.description !== undefined)
       updateData.description = input.description;
     if (input.status !== undefined) updateData.status = input.status;
 
     const workshop = await db.workshop.update({
-      where: { id: input.id },
+      where: { id: workshopId },
       data: updateData,
     });
 
     revalidatePath("/workshops");
-    revalidatePath(`/workshop/${input.id}`);
+    revalidatePath(`/workshop/${workshopId}`);
 
     return { success: true, data: workshop };
   } catch (error) {
@@ -74,8 +66,7 @@ export async function updateWorkshopStatus(
       return { success: false, error: "Authentication required" };
     }
 
-    const result = await updateWorkshop({
-      id: workshopId,
+    const result = await updateWorkshop(workshopId, {
       status,
     });
 
@@ -90,7 +81,8 @@ export async function updateWorkshopStatus(
  * Updates an exercise
  */
 export async function updateExercise(
-  input: UpdateExerciseInput,
+  exerciseId: string,
+  input: Prisma.ExerciseUpdateInput,
 ): Promise<ActionResult<unknown>> {
   try {
     const session = await auth();
@@ -101,7 +93,7 @@ export async function updateExercise(
     // Verify user owns the workshop through the exercise
     const existingExercise = await db.exercise.findFirst({
       where: {
-        id: input.id,
+        id: exerciseId,
         workshop: {
           ownerId: session.user.id,
         },
@@ -116,18 +108,14 @@ export async function updateExercise(
     }
 
     // Build update data
-    const updateData: {
-      title?: string;
-      description?: string;
-      order?: number;
-    } = {};
+    const updateData: Prisma.ExerciseUpdateInput = {};
     if (input.title !== undefined) updateData.title = input.title;
     if (input.description !== undefined)
       updateData.description = input.description;
     if (input.order !== undefined) updateData.order = input.order;
 
     const exercise = await db.exercise.update({
-      where: { id: input.id },
+      where: { id: exerciseId },
       data: updateData,
     });
 
@@ -144,7 +132,8 @@ export async function updateExercise(
  * Updates a workshop file
  */
 export async function updateWorkshopFile(
-  input: UpdateWorkshopFileInput,
+  workshopFileId: string,
+  input: Prisma.WorkshopFileUpdateInput,
 ): Promise<ActionResult<unknown>> {
   try {
     const session = await auth();
@@ -155,7 +144,7 @@ export async function updateWorkshopFile(
     // Verify user owns the workshop through the file's exercise
     const existingFile = await db.workshopFile.findFirst({
       where: {
-        id: input.id,
+        id: workshopFileId,
         exercise: {
           workshop: {
             ownerId: session.user.id,
@@ -176,17 +165,13 @@ export async function updateWorkshopFile(
     }
 
     // Build update data
-    const updateData: {
-      filename?: string;
-      content?: string;
-      language?: string;
-    } = {};
+    const updateData: Prisma.WorkshopFileUpdateInput = {};
     if (input.filename !== undefined) updateData.filename = input.filename;
     if (input.content !== undefined) updateData.content = input.content;
     if (input.language !== undefined) updateData.language = input.language;
 
     const file = await db.workshopFile.update({
-      where: { id: input.id },
+      where: { id: workshopFileId },
       data: updateData,
     });
 
