@@ -14,18 +14,6 @@ datasource db {
     url      = env("DATABASE_URL")
 }
 
-model Post {
-    id        Int      @id @default(autoincrement())
-    name      String
-    createdAt DateTime @default(now())
-    updatedAt DateTime @updatedAt
-
-    createdBy   User   @relation(fields: [createdById], references: [id])
-    createdById String
-
-    @@index([name])
-}
-
 // Necessary for Next auth
 model Account {
     id                       String  @id @default(cuid())
@@ -62,7 +50,7 @@ model User {
     image         String?
     accounts      Account[]
     sessions      Session[]
-    posts         Post[]
+    workshops     Workshop[] // Add workshop ownership relation
 }
 
 model VerificationToken {
@@ -71,4 +59,56 @@ model VerificationToken {
     expires    DateTime
 
     @@unique([identifier, token])
+}
+
+// Workshop-related models
+model Workshop {
+    id          String        @id @default(cuid())
+    title       String
+    description String        // SQLite doesn't need @db.Text annotation
+    status      WorkshopStatus @default(PLANNED)
+    createdAt   DateTime      @default(now())
+    updatedAt   DateTime      @updatedAt
+
+    // Relations
+    ownerId     String
+    owner       User          @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+    exercises   Exercise[]
+
+    @@index([ownerId])
+    @@index([status])
+}
+
+model Exercise {
+    id          String @id @default(cuid())
+    title       String
+    description String // SQLite doesn't need @db.Text annotation
+    order       Int    // For ordering exercises within a workshop
+
+    // Relations
+    workshopId  String
+    workshop    Workshop @relation(fields: [workshopId], references: [id], onDelete: Cascade)
+    files       WorkshopFile[]
+
+    @@index([workshopId])
+}
+
+model WorkshopFile {
+    id         String @id @default(cuid())
+    filename   String
+    content    String // SQLite doesn't need @db.Text annotation
+    language   String
+
+    // Relations
+    exerciseId String
+    exercise   Exercise @relation(fields: [exerciseId], references: [id], onDelete: Cascade)
+
+    @@index([exerciseId])
+    @@unique([exerciseId, filename]) // Prevent duplicate filenames per exercise
+}
+
+enum WorkshopStatus {
+    PLANNED
+    LIVE
+    COMPLETED
 }
