@@ -3,9 +3,11 @@
 import type { GetWorkshopsFilter } from "../../server/actions/workshop/workshop.types";
 import type { WorkshopWithDetails } from "../../server/actions/workshop/workshop.types";
 import Link from "next/link";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { useSession } from "next-auth/react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { WorkshopCard } from "../../components/workshop/WorkshopCard";
+import { Pagination } from "../../components/ui/pagination";
 import { useClientLogger } from "../../lib/Logger/ClientLogger";
 import { getWorkshops } from "../../server/actions/workshop/read";
 
@@ -23,22 +25,114 @@ function LoadingSkeleton() {
 
 export default function WorkshopsPage() {
   const { data: session } = useSession();
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const logger = useClientLogger();
+
+  // State management
   const [workshops, setWorkshops] = useState<WorkshopWithDetails[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [totalCount, setTotalCount] = useState(0);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [pageSize, setPageSize] = useState(20);
+
+  // URL state management - read from URL params
+  const urlStatusFilter = searchParams.get("status") || "all";
+  const urlSearchQuery = searchParams.get("search") || "";
+  const urlPage = parseInt(searchParams.get("page") || "1", 10);
+  const urlPageSize = parseInt(searchParams.get("limit") || "20", 10);
+
+  // Local state for immediate UI updates
   const [statusFilter, setStatusFilter] = useState<
     "all" | "live" | "planned" | "completed"
-  >("all");
-  const [searchQuery, setSearchQuery] = useState("");
-  const logger = useClientLogger();
+  >(urlStatusFilter as "all" | "live" | "planned" | "completed");
+  const [searchQuery, setSearchQuery] = useState(urlSearchQuery);
 
+  // Update URL with current state
+  const updateURL = useCallback(
+    (newParams: Record<string, string>) => {
+      const params = new URLSearchParams(searchParams.toString());
+
+      // Update or remove parameters
+      Object.entries(newParams).forEach(([key, value]) => {
+        if (value && value !== "all") {
+          params.set(key, value);
+        } else {
+          params.delete(key);
+        }
+      });
+
+      // Reset to page 1 when filters change (except for page changes)
+      if (
+        newParams.page === undefined &&
+        (newParams.status || newParams.search)
+      ) {
+        params.delete("page");
+      }
+
+      const newURL = `?${params.toString()}`;
+      router.push(newURL, { scroll: false });
+    },
+    [router, searchParams],
+  );
+
+  // Handle search input changes with debouncing
+  const handleSearchChange = useCallback(
+    (value: string) => {
+      setSearchQuery(value);
+      updateURL({ search: value, page: "1" });
+    },
+    [updateURL],
+  );
+
+  // Handle status filter changes
+  const handleStatusChange = useCallback(
+    (value: typeof statusFilter) => {
+      setStatusFilter(value);
+      updateURL({ status: value, page: "1" });
+    },
+    [updateURL],
+  );
+
+  // Handle page changes
+  const handlePageChange = useCallback(
+    (page: number) => {
+      setCurrentPage(page);
+      updateURL({ page: page.toString() });
+    },
+    [updateURL],
+  );
+
+  // Handle page size changes
+  const handlePageSizeChange = useCallback(
+    (newPageSize: number) => {
+      setPageSize(newPageSize);
+      updateURL({ limit: newPageSize.toString(), page: "1" });
+    },
+    [updateURL],
+  );
+
+  // Sync local state with URL params
+  useEffect(() => {
+    setStatusFilter(urlStatusFilter as typeof statusFilter);
+    setSearchQuery(urlSearchQuery);
+    setCurrentPage(urlPage);
+    setPageSize(urlPageSize);
+  }, [urlStatusFilter, urlSearchQuery, urlPage, urlPageSize]);
+
+  // Load workshops with current filters and pagination
   useEffect(() => {
     const loadWorkshops = async () => {
       setIsLoading(true);
       setError(null);
 
       try {
-        const filter: GetWorkshopsFilter = {};
+        const filter: GetWorkshopsFilter = {
+          page: currentPage,
+          limit: pageSize,
+        };
 
         // Apply status filter
         if (statusFilter !== "all") {
@@ -57,6 +151,10 @@ export default function WorkshopsPage() {
 
         if (result.success) {
           setWorkshops(result.data.workshops);
+          setTotalCount(result.data.totalCount);
+          setTotalPages(result.data.totalPages);
+          setCurrentPage(result.data.currentPage);
+          setPageSize(result.data.pageSize);
         } else {
           setError(result.error);
           logger.error("Failed to load workshops:", result.error);
@@ -71,7 +169,21 @@ export default function WorkshopsPage() {
     };
 
     void loadWorkshops();
-  }, [logger, statusFilter, searchQuery]);
+  }, [logger, statusFilter, searchQuery, currentPage, pageSize]);
+
+  // Memoized search input with debouncing
+  const debouncedSearchQuery = useMemo(() => {
+    const timeoutId = setTimeout(() => {
+      handleSearchChange(searchQuery);
+    }, 300);
+
+    return () => clearTimeout(timeoutId);
+  }, [searchQuery, handleSearchChange]);
+
+  // Cleanup timeout on unmount
+  useEffect(() => {
+    return debouncedSearchQuery;
+  }, [debouncedSearchQuery]);
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-[#18181b] to-[#1b1b1c] text-white">
@@ -104,7 +216,7 @@ export default function WorkshopsPage() {
           <select
             value={statusFilter}
             onChange={(e) =>
-              setStatusFilter(e.target.value as typeof statusFilter)
+              handleStatusChange(e.target.value as typeof statusFilter)
             }
             className="rounded-md border border-gray-600 bg-gray-800 px-3 py-2 text-white focus:border-blue-500 focus:outline-none"
           >
@@ -128,11 +240,29 @@ export default function WorkshopsPage() {
             ))}
           </div>
         ) : (
-          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-            {workshops.map((workshop) => (
-              <WorkshopCard key={workshop.id} workshop={workshop} />
-            ))}
-          </div>
+          <>
+            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+              {workshops.map((workshop) => (
+                <WorkshopCard key={workshop.id} workshop={workshop} />
+              ))}
+            </div>
+
+            {/* Pagination */}
+            {totalCount > 0 && (
+              <div className="mt-8">
+                <Pagination
+                  currentPage={currentPage}
+                  totalPages={totalPages}
+                  pageSize={pageSize}
+                  totalCount={totalCount}
+                  onPageChange={handlePageChange}
+                  onPageSizeChange={handlePageSizeChange}
+                  pageSizeOptions={[10, 20, 50]}
+                  showPageSizeSelector={true}
+                />
+              </div>
+            )}
+          </>
         )}
 
         {!isLoading && workshops.length === 0 && !error && (
