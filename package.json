@@ -52,6 +52,7 @@
     "zod": "^3.24.2"
   },
   "devDependencies": {
+    "@auth/core": "0.40.0",
     "@eslint/eslintrc": "^3.3.1",
     "@eslint/js": "9.31.0",
     "@tailwindcss/postcss": "^4.0.15",

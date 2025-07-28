@@ -1,6 +1,7 @@
 import { type DefaultSession, type NextAuthConfig } from "next-auth";
 import GitHubProvider from "next-auth/providers/github";
 import { PrismaAdapter } from "@auth/prisma-adapter";
+import { ServerLogger } from "@/lib/Logger/ServerLogger";
 import { db } from "../db";
 import { env } from "../../env.js";
 import { logAuthEvent, validateAuthConfig } from "../../lib/auth/config-utils";
@@ -33,7 +34,7 @@ declare module "next-auth" {
 // Validate configuration on startup
 const configValidation = validateAuthConfig();
 if (!configValidation.isValid) {
-  console.error(
+  ServerLogger.error(
     "❌ Authentication configuration errors:",
     configValidation.errors,
   );

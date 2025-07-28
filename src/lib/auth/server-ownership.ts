@@ -1,8 +1,8 @@
 import "server-only";
 
+import type { Workshop } from "@prisma/client";
 import { auth } from "@/server/auth";
 import {
-  type Workshop,
   type UserPermissions,
   getUserPermissions,
   getCreationPermissions,

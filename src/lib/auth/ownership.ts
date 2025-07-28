@@ -1,16 +1,5 @@
+import type { Workshop } from "@prisma/client";
 import { type Session } from "next-auth";
-
-export interface Workshop {
-  id: string;
-  title: string;
-  description: string;
-  ownerId: string;
-  ownerName: string;
-  exerciseCount: number;
-  status: "planned" | "live" | "completed";
-  createdAt: string;
-  updatedAt?: string;
-}
 
 export interface OwnershipPermissions {
   canEdit: boolean;
@@ -59,8 +48,8 @@ export function getOwnershipPermissions(
     canEdit: isOwner,
     canDelete: isOwner,
     canManage: isOwner,
-    canStart: isOwner && workshop.status === "planned",
-    canStop: isOwner && workshop.status === "live",
+    canStart: isOwner && workshop.status === "PLANNED",
+    canStop: isOwner && workshop.status === "LIVE",
     canViewSubmissions: isOwner,
     canExport: isOwner,
   };
@@ -77,9 +66,9 @@ export function getParticipationPermissions(
 
   return {
     canView: true, // All users can view workshop details
-    canJoin: isAuthenticated && workshop.status === "live",
-    canParticipate: isAuthenticated && workshop.status === "live",
-    canSubmit: isAuthenticated && workshop.status === "live",
+    canJoin: isAuthenticated && workshop.status === "LIVE",
+    canParticipate: isAuthenticated && workshop.status === "LIVE",
+    canSubmit: isAuthenticated && workshop.status === "LIVE",
   };
 }
 

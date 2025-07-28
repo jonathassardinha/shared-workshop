@@ -1,11 +1,11 @@
 "use client";
 
+import type { Workshop } from "@prisma/client";
 import { useSession } from "next-auth/react";
 import { type ReactNode } from "react";
 import { AlertTriangle } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Skeleton } from "@/components/ui/skeleton";
-import { type Workshop } from "../../lib/auth/ownership";
 import { useWorkshopPermissions } from "../../hooks/useOwnership";
 
 interface OwnershipGuardProps {

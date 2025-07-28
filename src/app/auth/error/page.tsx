@@ -1,12 +1,23 @@
 "use client";
 
+import type { ErrorPageParam } from "@auth/core/types";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { getOAuthErrorMessage } from "../../../lib/auth/config-utils";
+import { useEffect } from "react";
+import { getOAuthErrorMessage } from "@/lib/auth/config-utils";
+import { useClientLogger } from "@/lib/Logger/ClientLogger";
 
 export default function AuthErrorPage() {
   const searchParams = useSearchParams();
-  const error = searchParams.get("error") ?? "Default";
+  const error = searchParams.get("error") as ErrorPageParam | null;
+  const clientLogger = useClientLogger();
+
+  useEffect(() => {
+    if (error) {
+      clientLogger.error(new Error("Authentication error"), { error });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [error]);
 
   const errorMessage = getOAuthErrorMessage(error);
 

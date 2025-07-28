@@ -1,7 +1,7 @@
+import type { Workshop } from "@prisma/client";
 import { useSession } from "next-auth/react";
 import { useMemo } from "react";
 import {
-  type Workshop,
   type UserPermissions,
   getUserPermissions,
   getCreationPermissions,
