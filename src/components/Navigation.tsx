@@ -4,16 +4,15 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useSession, signIn } from "next-auth/react";
 import { useState } from "react";
+import { Github, Loader2 } from "lucide-react";
 import { cn } from "../lib/cn";
 import { useCreationPermissions } from "../hooks/useOwnership";
-import { mockUsers } from "../lib/auth/mockUsers";
-import { UserProfile, MockUserSwitcher } from "./auth";
+import { UserProfile } from "./auth";
 
 export function Navigation() {
   const pathname = usePathname();
   const { data: session, status } = useSession();
   const { canCreate } = useCreationPermissions();
-  const [showSignInOptions, setShowSignInOptions] = useState(false);
   const [isSigningIn, setIsSigningIn] = useState(false);
 
   const isActive = (path: string) => {
@@ -23,21 +22,10 @@ export function Navigation() {
     return pathname.startsWith(path);
   };
 
-  const handleQuickSignIn = async () => {
-    if (process.env.NODE_ENV === "development") {
-      setShowSignInOptions(true);
-    } else {
-      // In production, this would open the sign-in modal or redirect
-      alert("Authentication providers will be available in production");
-    }
-  };
-
-  const handleMockSignIn = async (userId: string) => {
+  const handleGitHubSignIn = async () => {
     setIsSigningIn(true);
-    setShowSignInOptions(false);
     try {
-      await signIn("mock", {
-        userId,
+      await signIn("github", {
         redirect: false,
       });
     } catch (error) {
@@ -105,62 +93,27 @@ export function Navigation() {
           </div>
 
           <div className="flex items-center space-x-4">
-            {/* Development user switcher - only in development */}
-            {process.env.NODE_ENV === "development" && <MockUserSwitcher />}
-
             {/* User authentication section */}
             {session?.user ? (
               <UserProfile />
             ) : (
-              <div className="relative">
-                <button
-                  onClick={handleQuickSignIn}
-                  disabled={isSigningIn}
-                  className="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-blue-700 disabled:opacity-50"
-                >
-                  {isSigningIn ? "Signing in..." : "Sign In"}
-                </button>
-
-                {showSignInOptions &&
-                  process.env.NODE_ENV === "development" && (
-                    <div className="absolute top-full right-0 z-50 mt-1 w-64 rounded-lg border border-gray-600 bg-gray-800 py-1 shadow-xl">
-                      <div className="border-b border-gray-600 px-3 py-2">
-                        <p className="text-xs font-medium text-yellow-400">
-                          Development Mode
-                        </p>
-                        <p className="text-xs text-gray-400">
-                          Choose a test user
-                        </p>
-                      </div>
-                      <div className="py-1">
-                        {mockUsers.map((user) => (
-                          <button
-                            key={user.id}
-                            onClick={() => handleMockSignIn(user.id)}
-                            className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-gray-300 transition-colors hover:bg-gray-700 hover:text-white"
-                          >
-                            <div className="flex h-6 w-6 items-center justify-center rounded-full bg-gray-600 text-xs text-white">
-                              {user.name
-                                .split(" ")
-                                .map((n) => n.charAt(0))
-                                .join("")
-                                .slice(0, 2)}
-                            </div>
-                            <span className="truncate">{user.name}</span>
-                          </button>
-                        ))}
-                      </div>
-                      <div className="border-t border-gray-600 px-3 py-2">
-                        <button
-                          onClick={() => setShowSignInOptions(false)}
-                          className="text-xs text-gray-400 hover:text-gray-300"
-                        >
-                          Cancel
-                        </button>
-                      </div>
-                    </div>
-                  )}
-              </div>
+              <button
+                onClick={handleGitHubSignIn}
+                disabled={isSigningIn}
+                className="flex items-center gap-2 rounded-md border border-gray-600 bg-gray-900 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-gray-800 disabled:opacity-50"
+              >
+                {isSigningIn ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    Signing in...
+                  </>
+                ) : (
+                  <>
+                    <Github className="h-4 w-4" />
+                    Sign in with GitHub
+                  </>
+                )}
+              </button>
             )}
           </div>
         </div>

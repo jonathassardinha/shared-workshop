@@ -95,12 +95,7 @@ export function UserProfile({ className = "" }: UserProfileProps) {
                   {session.user.email}
                 </p>
               )}
-              {session.user.createdAt && (
-                <p className="text-xs text-gray-500">
-                  Member since{" "}
-                  {new Date(session.user.createdAt).toLocaleDateString()}
-                </p>
-              )}
+              <p className="text-xs text-gray-500">Signed in with GitHub</p>
             </div>
           </div>
         </DropdownMenuLabel>
