@@ -7,6 +7,7 @@
 > - **UPDATE** the "Current Status" section when new features are implemented
 > - **ADD** new phases or requirements as they emerge
 > - **COMMIT** this document after major changes to keep it current
+> - **TERMINAL SETUP**: Always run `nvm use` and `corepack enable` before any terminal commands to ensure correct Node.js and package manager versions
 
 ## Overview
 
@@ -18,17 +19,20 @@ A coding exercise platform for frontend workshops with an in-browser multi-file 
 
 - **Framework**: Next.js 15 with App Router
 - **Language**: TypeScript
+- **Runtime**: Node.js v22 (managed via nvm)
+- **Package Manager**: pnpm@10.12.2 (managed via corepack)
 - **Styling**: Tailwind CSS v4.1.11
 - **UI Components**: shadcn/ui (with Radix UI primitives)
+- **Form Management**: React Hook Form
 - **Authentication**: NextAuth.js v5 beta
 - **Database**: Prisma ORM (configured, not yet integrated)
 - **State Management**: Jotai + React Context
-- **Package Manager**: pnpm
 - **Module System**: ESM (`"type": "module"` in package.json)
 
 ### Key Libraries
 
 - **Code Editor**: Monaco Editor + Sandpack (for live preview)
+- **Form Management**: React Hook Form + @hookform/resolvers (with zod validation)
 - **Icons**: Lucide React
 - **Utilities**: clsx, tailwind-merge, zod
 - **Logging**: Custom Logger utility (ClientLogger/ServerLogger)
