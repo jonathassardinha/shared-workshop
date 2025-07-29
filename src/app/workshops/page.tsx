@@ -3,7 +3,7 @@
 import type { GetWorkshopsFilter } from "../../server/actions/workshop/workshop.types";
 import type { WorkshopWithDetails } from "../../server/actions/workshop/workshop.types";
 import Link from "next/link";
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { WorkshopCard } from "../../components/workshop/WorkshopCard";
@@ -39,10 +39,10 @@ export default function WorkshopsPage() {
   const [pageSize, setPageSize] = useState(20);
 
   // URL state management - read from URL params
-  const urlStatusFilter = searchParams.get("status") || "all";
-  const urlSearchQuery = searchParams.get("search") || "";
-  const urlPage = parseInt(searchParams.get("page") || "1", 10);
-  const urlPageSize = parseInt(searchParams.get("limit") || "20", 10);
+  const urlStatusFilter = searchParams.get("status") ?? "all";
+  const urlSearchQuery = searchParams.get("search") ?? "";
+  const urlPage = parseInt(searchParams.get("page") ?? "1", 10);
+  const urlPageSize = parseInt(searchParams.get("limit") ?? "20", 10);
 
   // Local state for immediate UI updates
   const [statusFilter, setStatusFilter] = useState<
@@ -63,14 +63,6 @@ export default function WorkshopsPage() {
           params.delete(key);
         }
       });
-
-      // Reset to page 1 when filters change (except for page changes)
-      if (
-        newParams.page === undefined &&
-        (newParams.status || newParams.search)
-      ) {
-        params.delete("page");
-      }
 
       const newURL = `?${params.toString()}`;
       router.push(newURL, { scroll: false });
@@ -153,8 +145,8 @@ export default function WorkshopsPage() {
           setWorkshops(result.data.workshops);
           setTotalCount(result.data.totalCount);
           setTotalPages(result.data.totalPages);
-          setCurrentPage(result.data.currentPage);
-          setPageSize(result.data.pageSize);
+          // setCurrentPage(result.data.currentPage);
+          // setPageSize(result.data.pageSize);
         } else {
           setError(result.error);
           logger.error("Failed to load workshops:", result.error);
@@ -168,22 +160,20 @@ export default function WorkshopsPage() {
       }
     };
 
-    void loadWorkshops();
+    loadWorkshops().catch((error) => {
+      logger.error("Error loading workshops:", error);
+    });
   }, [logger, statusFilter, searchQuery, currentPage, pageSize]);
 
   // Memoized search input with debouncing
-  const debouncedSearchQuery = useMemo(() => {
+  useEffect(() => {
     const timeoutId = setTimeout(() => {
       handleSearchChange(searchQuery);
     }, 300);
 
     return () => clearTimeout(timeoutId);
-  }, [searchQuery, handleSearchChange]);
-
-  // Cleanup timeout on unmount
-  useEffect(() => {
-    return debouncedSearchQuery;
-  }, [debouncedSearchQuery]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchQuery]);
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-[#18181b] to-[#1b1b1c] text-white">
