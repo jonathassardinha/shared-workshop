@@ -114,7 +114,12 @@ export default function CreateWorkshopPage() {
       id: Date.now().toString(),
       title: `Exercise ${exercises.length + 1}`,
       description: "",
-      files: {},
+      files: {
+        "/App.tsx": {
+          language: "typescript",
+          model: InitialModel,
+        },
+      },
     };
 
     setValue("exercises", [...exercises, newExercise]);
