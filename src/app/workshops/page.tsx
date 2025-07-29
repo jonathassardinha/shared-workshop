@@ -3,7 +3,7 @@
 import type { GetWorkshopsFilter } from "../../server/actions/workshop/workshop.types";
 import type { WorkshopWithDetails } from "../../server/actions/workshop/workshop.types";
 import Link from "next/link";
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { WorkshopCard } from "../../components/workshop/WorkshopCard";
@@ -175,6 +175,20 @@ export default function WorkshopsPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchQuery]);
 
+  // Memoize workshop cards to prevent unnecessary re-renders
+  const workshopCards = useMemo(() => {
+    return workshops.map((workshop) => (
+      <WorkshopCard key={workshop.id} workshop={workshop} />
+    ));
+  }, [workshops]);
+
+  // Memoize loading skeletons
+  const loadingSkeletons = useMemo(() => {
+    return Array.from({ length: 6 }).map((_, index) => (
+      <LoadingSkeleton key={index} />
+    ));
+  }, []);
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-[#18181b] to-[#1b1b1c] text-white">
       <div className="mx-auto max-w-7xl px-4 py-8">
@@ -225,16 +239,12 @@ export default function WorkshopsPage() {
 
         {isLoading ? (
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-            {Array.from({ length: 6 }).map((_, index) => (
-              <LoadingSkeleton key={index} />
-            ))}
+            {loadingSkeletons}
           </div>
         ) : (
           <>
             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-              {workshops.map((workshop) => (
-                <WorkshopCard key={workshop.id} workshop={workshop} />
-              ))}
+              {workshopCards}
             </div>
 
             {/* Pagination */}

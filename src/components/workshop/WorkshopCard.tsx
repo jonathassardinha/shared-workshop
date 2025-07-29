@@ -1,6 +1,7 @@
 import type { WorkshopStatus } from "@prisma/client";
 import type { WorkshopWithDetails } from "../../server/actions/workshop/workshop.types";
 import Link from "next/link";
+import { memo, useMemo } from "react";
 import { getOwnershipStatus } from "../../lib/auth/mock-user-utils";
 
 // Re-export WorkshopWithDetails type for convenience
@@ -30,11 +31,20 @@ interface WorkshopCardProps {
   showOwnership?: boolean;
 }
 
-export function WorkshopCard({
+export const WorkshopCard = memo(function WorkshopCard({
   workshop,
   showOwnership = false,
 }: WorkshopCardProps) {
-  const ownershipStatus = getOwnershipStatus(workshop.ownerId);
+  // Memoize expensive calculations
+  const ownershipStatus = useMemo(
+    () => getOwnershipStatus(workshop.ownerId),
+    [workshop.ownerId],
+  );
+
+  const formattedDate = useMemo(
+    () => new Date(workshop.createdAt).toLocaleDateString(),
+    [workshop.createdAt],
+  );
 
   return (
     <div className="rounded-lg border border-gray-700 bg-gray-800 p-6 transition-colors hover:border-gray-600">
@@ -55,7 +65,7 @@ export function WorkshopCard({
           )}
         </div>
         <div>Exercises: {workshop.exerciseCount}</div>
-        <div>Created: {new Date(workshop.createdAt).toLocaleDateString()}</div>
+        <div>Created: {formattedDate}</div>
       </div>
 
       <div className="mb-4 flex items-center gap-2">
@@ -97,4 +107,4 @@ export function WorkshopCard({
       </div>
     </div>
   );
-}
+});
