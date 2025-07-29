@@ -1,10 +1,12 @@
 // Error recovery utilities for automatic recovery and fallback mechanisms
 
-import type { WorkshopError, ErrorRecoveryStrategy } from "./workshop-errors";
+import type { Logger } from "../Logger/Logger.utils";
+import type { WorkshopError } from "./workshop-errors";
 import {
   getRecoveryStrategy,
   shouldRetryError,
   getRetryDelay,
+  WorkshopErrorType,
 } from "./workshop-errors";
 
 export interface RecoveryContext {
@@ -44,6 +46,7 @@ export class DraftManager {
   private static readonly DRAFT_EXPIRY_DAYS = 7;
 
   static saveDraft(
+    logger: Logger,
     data: Omit<DraftData, "id" | "timestamp" | "expiresAt">,
   ): string {
     const id = `${this.DRAFT_PREFIX}${Date.now()}`;
@@ -61,40 +64,42 @@ export class DraftManager {
       localStorage.setItem(id, JSON.stringify(draftData));
       return id;
     } catch (error) {
-      console.warn("Failed to save draft:", error);
+      logger.error("Failed to save draft:", error);
       return "";
     }
   }
 
-  static loadDraft(id: string): DraftData | null {
+  static loadDraft(logger: Logger, id: string): DraftData | null {
     try {
       const data = localStorage.getItem(id);
       if (!data) return null;
 
-      const draftData: DraftData = JSON.parse(data);
+      const draftData: DraftData = JSON.parse(data) as DraftData;
 
       // Check if draft has expired
       if (Date.now() > draftData.expiresAt) {
-        this.deleteDraft(id);
+        this.deleteDraft(logger, id);
         return null;
       }
 
       return draftData;
     } catch (error) {
-      console.warn("Failed to load draft:", error);
+      logger.error("Failed to load draft:", error);
       return null;
     }
   }
 
-  static deleteDraft(id: string): void {
+  static deleteDraft(logger: Logger, id: string): void {
     try {
       localStorage.removeItem(id);
     } catch (error) {
-      console.warn("Failed to delete draft:", error);
+      logger.error("Failed to delete draft:", error);
     }
   }
 
-  static listDrafts(): Array<{ id: string; title: string; timestamp: number }> {
+  static listDrafts(
+    logger: Logger,
+  ): Array<{ id: string; title: string; timestamp: number }> {
     const drafts: Array<{ id: string; title: string; timestamp: number }> = [];
 
     try {
@@ -104,7 +109,7 @@ export class DraftManager {
           const data = localStorage.getItem(key);
           if (data) {
             try {
-              const draftData: DraftData = JSON.parse(data);
+              const draftData: DraftData = JSON.parse(data) as DraftData;
               if (Date.now() <= draftData.expiresAt) {
                 drafts.push({
                   id: draftData.id,
@@ -113,30 +118,30 @@ export class DraftManager {
                 });
               } else {
                 // Clean up expired drafts
-                this.deleteDraft(key);
+                this.deleteDraft(logger, key);
               }
             } catch {
               // Invalid draft data, clean it up
-              this.deleteDraft(key);
+              this.deleteDraft(logger, key);
             }
           }
         }
       }
     } catch (error) {
-      console.warn("Failed to list drafts:", error);
+      logger.error("Failed to list drafts:", error);
     }
 
     return drafts.sort((a, b) => b.timestamp - a.timestamp);
   }
 
-  static cleanupExpiredDrafts(): number {
+  static cleanupExpiredDrafts(logger: Logger): number {
     let cleanedCount = 0;
-    const drafts = this.listDrafts();
+    const drafts = this.listDrafts(logger);
 
     for (const draft of drafts) {
-      const draftData = this.loadDraft(draft.id);
+      const draftData = this.loadDraft(logger, draft.id);
       if (!draftData) {
-        this.deleteDraft(draft.id);
+        this.deleteDraft(logger, draft.id);
         cleanedCount++;
       }
     }
@@ -225,14 +230,14 @@ export class RetryManager {
 // Error recovery orchestrator
 export class RecoveryOrchestrator {
   static async handleError<T>(
+    logger: Logger,
     error: WorkshopError,
     context: RecoveryContext,
-    fallbackOperation?: () => Promise<T>,
   ): Promise<RecoveryResult> {
     const strategy = getRecoveryStrategy(error);
 
     // Log the error
-    logWorkshopError(error, context);
+    logWorkshopError(logger, error, context);
 
     // Try retry if applicable
     if (shouldRetryError(error) && context.attempts < strategy.retryAttempts) {
@@ -250,7 +255,7 @@ export class RecoveryOrchestrator {
     // Try fallback action
     switch (strategy.fallbackAction) {
       case "save-draft":
-        return this.handleDraftSave(error, context);
+        return this.handleDraftSave(error, context, logger);
       case "show-error":
         return {
           success: false,
@@ -258,7 +263,7 @@ export class RecoveryOrchestrator {
           action: "abort",
         };
       case "reload":
-        return this.handleReload(error, context);
+        return this.handleReload(error);
       default:
         return {
           success: false,
@@ -271,10 +276,14 @@ export class RecoveryOrchestrator {
   private static handleDraftSave(
     error: WorkshopError,
     context: RecoveryContext,
+    logger: Logger,
   ): RecoveryResult {
     try {
       if (context.data) {
-        const draftId = DraftManager.saveDraft(context.data as any);
+        const draftId = DraftManager.saveDraft(
+          logger,
+          context.data as Omit<DraftData, "id" | "timestamp" | "expiresAt">,
+        );
         if (draftId) {
           return {
             success: true,
@@ -284,7 +293,7 @@ export class RecoveryOrchestrator {
         }
       }
     } catch (draftError) {
-      console.warn("Failed to save draft:", draftError);
+      logger.error("Failed to save draft:", draftError);
     }
 
     return {
@@ -294,10 +303,7 @@ export class RecoveryOrchestrator {
     };
   }
 
-  private static handleReload(
-    error: WorkshopError,
-    context: RecoveryContext,
-  ): RecoveryResult {
+  private static handleReload(error: WorkshopError): RecoveryResult {
     // In a real application, you might want to reload the page or component
     return {
       success: false,
@@ -311,7 +317,7 @@ export class RecoveryOrchestrator {
 export class SessionRecovery {
   private static readonly SESSION_KEY = "workshop-session-data";
 
-  static saveSessionData(data: unknown): void {
+  static saveSessionData(logger: Logger, data: unknown): void {
     try {
       const sessionData = {
         data,
@@ -319,28 +325,28 @@ export class SessionRecovery {
       };
       sessionStorage.setItem(this.SESSION_KEY, JSON.stringify(sessionData));
     } catch (error) {
-      console.warn("Failed to save session data:", error);
+      logger.error("Failed to save session data:", error);
     }
   }
 
-  static loadSessionData(): unknown | null {
+  static loadSessionData(logger: Logger): unknown {
     try {
       const data = sessionStorage.getItem(this.SESSION_KEY);
       if (!data) return null;
 
-      const sessionData = JSON.parse(data);
+      const sessionData = JSON.parse(data) as { data: unknown };
       return sessionData.data;
     } catch (error) {
-      console.warn("Failed to load session data:", error);
+      logger.error("Failed to load session data:", error);
       return null;
     }
   }
 
-  static clearSessionData(): void {
+  static clearSessionData(logger: Logger): void {
     try {
       sessionStorage.removeItem(this.SESSION_KEY);
     } catch (error) {
-      console.warn("Failed to clear session data:", error);
+      logger.error("Failed to clear session data:", error);
     }
   }
 }
@@ -395,7 +401,7 @@ function classifyError(error: unknown): WorkshopError {
       message.includes("prisma")
     ) {
       return {
-        type: "DATABASE_ERROR" as any,
+        type: WorkshopErrorType.DATABASE_ERROR,
         message: error.message,
         recoverable: true,
         retryable: true,
@@ -409,7 +415,7 @@ function classifyError(error: unknown): WorkshopError {
       message.includes("timeout")
     ) {
       return {
-        type: "NETWORK_ERROR" as any,
+        type: WorkshopErrorType.NETWORK_ERROR,
         message: error.message,
         recoverable: true,
         retryable: true,
@@ -419,7 +425,7 @@ function classifyError(error: unknown): WorkshopError {
   }
 
   return {
-    type: "UNKNOWN_ERROR" as any,
+    type: WorkshopErrorType.UNKNOWN_ERROR,
     message: "An unexpected error occurred",
     recoverable: false,
     retryable: false,
@@ -429,8 +435,9 @@ function classifyError(error: unknown): WorkshopError {
 
 // Helper function to log errors (imported from workshop-errors)
 function logWorkshopError(
+  logger: Logger,
   error: WorkshopError,
-  context?: Record<string, unknown>,
+  context?: RecoveryContext,
 ): void {
   const logData = {
     type: error.type,
@@ -444,5 +451,5 @@ function logWorkshopError(
   };
 
   // In a real application, you would send this to your logging service
-  // Logger.error("Workshop Error:", logData);
+  logger.error("Workshop Error:", logData);
 }

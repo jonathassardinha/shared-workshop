@@ -336,6 +336,6 @@ export function validateContentComprehensive(
   return {
     isValid,
     warnings: allWarnings,
-    sanitizedContent: results[0].sanitizedContent, // Use sanitized content from first result
+    sanitizedContent: results[0]?.sanitizedContent ?? "", // Use sanitized content from first result
   };
 }

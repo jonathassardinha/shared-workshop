@@ -1,13 +1,6 @@
 "use client";
 
-import {
-  createContext,
-  useContext,
-  useMemo,
-  useEffect,
-  type ReactNode,
-} from "react";
-import { atom, useAtom } from "jotai";
+import { createContext, useContext, useMemo, type ReactNode } from "react";
 
 export type EditorMode = "create" | "edit" | "view" | "submit";
 export type UserRole = "lecturer" | "participant";
@@ -26,9 +19,10 @@ export interface EditorContextType {
   canSave: boolean;
   onSubmit?: () => void;
   onSave?: () => void;
-  onDeleteFile?: (filePath: string) => void;
+  onDeleteFile: (filePath: string) => void;
+  onAddNewFile: (fileName: string, language: string, model: string) => void;
   files: Record<string, MonacoFile>;
-  setFiles: (files: Record<string, MonacoFile>) => void;
+  onFilesChange: (files: Record<string, MonacoFile>) => void;
 }
 
 const EditorContext = createContext<EditorContextType | null>(null);
@@ -38,10 +32,11 @@ export interface EditorProviderProps {
   mode: EditorMode;
   userRole: UserRole;
   initialFiles: Record<string, MonacoFile>;
+  onFilesChange: (files: Record<string, MonacoFile>) => void;
   onSubmit?: () => void;
   onSave?: () => void;
-  onFilesChange?: (files: Record<string, MonacoFile>) => void;
-  onDeleteFile?: (filePath: string) => void;
+  onAddNewFile: (fileName: string, language: string, model: string) => void;
+  onDeleteFile: (filePath: string) => void;
 }
 
 export function EditorProvider({
@@ -52,23 +47,9 @@ export function EditorProvider({
   onSubmit,
   onSave,
   onFilesChange,
+  onAddNewFile,
   onDeleteFile,
 }: EditorProviderProps) {
-  const filesAtom = useMemo(() => atom(initialFiles), [initialFiles]);
-  const [files, setFiles] = useAtom(filesAtom);
-
-  // Sync file changes to parent component
-  useEffect(() => {
-    if (onFilesChange && files !== initialFiles) {
-      onFilesChange(files);
-    }
-  }, [files, onFilesChange, initialFiles]);
-
-  // Update internal state when initialFiles changes
-  useEffect(() => {
-    setFiles(initialFiles);
-  }, [initialFiles, setFiles]);
-
   const contextValue: EditorContextType = useMemo(() => {
     const canCreateFiles =
       mode === "create" || (mode === "edit" && userRole === "lecturer");
@@ -87,11 +68,21 @@ export function EditorProvider({
       canSave,
       onSubmit,
       onSave,
+      onAddNewFile,
       onDeleteFile,
-      files,
-      setFiles,
+      files: initialFiles,
+      onFilesChange,
     };
-  }, [mode, userRole, onSubmit, onSave, onDeleteFile, files, setFiles]);
+  }, [
+    mode,
+    userRole,
+    onSubmit,
+    onSave,
+    onAddNewFile,
+    onDeleteFile,
+    onFilesChange,
+    initialFiles,
+  ]);
 
   return (
     <EditorContext.Provider value={contextValue}>

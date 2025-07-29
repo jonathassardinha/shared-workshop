@@ -121,6 +121,9 @@ export default function LiveWorkshopPage({ params }: LiveWorkshopPageProps) {
             userRole={mockUserRole}
             onSubmit={mockUserRole === "participant" ? handleSubmit : undefined}
             onSave={mockUserRole === "lecturer" ? handleSave : undefined}
+            onFilesChange={() => {
+              return;
+            }}
           />
         </div>
       </div>

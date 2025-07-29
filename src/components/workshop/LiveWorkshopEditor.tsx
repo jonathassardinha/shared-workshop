@@ -12,6 +12,7 @@ interface LiveWorkshopEditorProps {
   userRole: UserRole;
   onSubmit?: () => void;
   onSave?: () => void;
+  onFilesChange: (files: Record<string, MonacoFile>) => void;
 }
 
 export function LiveWorkshopEditor({
@@ -19,6 +20,7 @@ export function LiveWorkshopEditor({
   userRole,
   onSubmit,
   onSave,
+  onFilesChange,
 }: LiveWorkshopEditorProps) {
   return (
     <EditorProvider
@@ -27,6 +29,13 @@ export function LiveWorkshopEditor({
       initialFiles={files}
       onSubmit={onSubmit}
       onSave={onSave}
+      onFilesChange={onFilesChange}
+      onDeleteFile={() => {
+        return;
+      }}
+      onAddNewFile={() => {
+        return;
+      }}
     >
       <div className="flex h-full flex-col">
         <div className="flex items-center justify-between border-b border-gray-700 bg-gray-800 px-4 py-2">

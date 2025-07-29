@@ -9,12 +9,12 @@ interface FileExplorerProps {
 
 export function FileExplorer({ onDeleteFile }: FileExplorerProps) {
   const {
-    sandpack: { activeFile, setActiveFile },
+    sandpack: { activeFile, setActiveFile: setSandpackActiveFile },
   } = useSandpack();
   const { files, canDeleteFiles } = useEditor();
 
   const handleClick = (file: string) => {
-    setActiveFile(file);
+    setSandpackActiveFile(file);
   };
 
   const handleDelete = (e: React.MouseEvent, filePath: string) => {

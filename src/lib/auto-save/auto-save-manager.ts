@@ -1,7 +1,9 @@
 // Auto-save functionality for workshop creation
 
+import type { Logger } from "../Logger/Logger.utils";
 import React from "react";
-import { DraftManager, type DraftData } from "../errors/recovery";
+import { DraftManager } from "../errors/recovery";
+import { useClientLogger } from "../Logger/ClientLogger";
 
 export interface AutoSaveConfig {
   enabled: boolean;
@@ -64,6 +66,7 @@ export class AutoSaveManager {
 
   // Initialize auto-save with data
   initialize(
+    logger: Logger,
     data: WorkshopData,
     onStateChange?: (state: AutoSaveState) => void,
   ): void {
@@ -71,14 +74,14 @@ export class AutoSaveManager {
     this.onStateChange = onStateChange;
 
     if (this.config.enabled) {
-      this.startPeriodicSave();
+      this.startPeriodicSave(logger);
     }
 
     this.updateState({ hasUnsavedChanges: false });
   }
 
   // Update data and trigger auto-save if needed
-  updateData(data: WorkshopData, triggerSave = false): void {
+  updateData(logger: Logger, data: WorkshopData, triggerSave = false): void {
     const hasChanged = this.hasDataChanged(data);
     this.lastData = data;
     this.changeCount++;
@@ -87,20 +90,24 @@ export class AutoSaveManager {
       this.updateState({ hasUnsavedChanges: true });
 
       if (triggerSave && this.config.saveOnChange) {
-        this.saveDraft();
+        this.saveDraft(logger).catch((error) => {
+          logger.error("Failed to save draft:", error);
+        });
       }
     }
   }
 
   // Handle blur events
-  onBlur(): void {
+  onBlur(logger: Logger): void {
     if (this.config.saveOnBlur && this.state.hasUnsavedChanges) {
-      this.saveDraft();
+      this.saveDraft(logger).catch((error) => {
+        logger.error("Failed to save draft:", error);
+      });
     }
   }
 
   // Manual save
-  async saveDraft(): Promise<string | null> {
+  async saveDraft(logger: Logger): Promise<string | null> {
     if (!this.lastData || this.state.isSaving) {
       return null;
     }
@@ -108,7 +115,7 @@ export class AutoSaveManager {
     this.updateState({ isSaving: true, error: null });
 
     try {
-      const draftId = DraftManager.saveDraft({
+      const draftId = DraftManager.saveDraft(logger, {
         title: this.lastData.title,
         description: this.lastData.description,
         exercises: this.lastData.exercises,
@@ -135,8 +142,8 @@ export class AutoSaveManager {
   }
 
   // Load draft
-  loadDraft(draftId: string): WorkshopData | null {
-    const draft = DraftManager.loadDraft(draftId);
+  loadDraft(logger: Logger, draftId: string): WorkshopData | null {
+    const draft = DraftManager.loadDraft(logger, draftId);
     if (draft) {
       this.lastData = {
         title: draft.title,
@@ -154,8 +161,8 @@ export class AutoSaveManager {
   }
 
   // Delete draft
-  deleteDraft(draftId: string): void {
-    DraftManager.deleteDraft(draftId);
+  deleteDraft(logger: Logger, draftId: string): void {
+    DraftManager.deleteDraft(logger, draftId);
     if (this.state.draftId === draftId) {
       this.updateState({ draftId: null });
     }
@@ -167,11 +174,11 @@ export class AutoSaveManager {
   }
 
   // Update configuration
-  updateConfig(config: Partial<AutoSaveConfig>): void {
+  updateConfig(logger: Logger, config: Partial<AutoSaveConfig>): void {
     this.config = { ...this.config, ...config };
 
     if (this.config.enabled && !this.intervalId) {
-      this.startPeriodicSave();
+      this.startPeriodicSave(logger);
     } else if (!this.config.enabled && this.intervalId) {
       this.stopPeriodicSave();
     }
@@ -187,14 +194,16 @@ export class AutoSaveManager {
   }
 
   // Private methods
-  private startPeriodicSave(): void {
+  private startPeriodicSave(logger: Logger): void {
     if (this.intervalId) {
       clearInterval(this.intervalId);
     }
 
     this.intervalId = setInterval(() => {
       if (this.state.hasUnsavedChanges && !this.state.isSaving) {
-        this.saveDraft();
+        this.saveDraft(logger).catch((error) => {
+          logger.error("Failed to save draft:", error);
+        });
       }
     }, this.config.interval);
   }
@@ -241,47 +250,49 @@ export function useAutoSave(
     draftId: null,
     error: null,
   });
+  const logger = useClientLogger();
 
   const managerRef = React.useRef<AutoSaveManager | null>(null);
 
   React.useEffect(() => {
-    if (!managerRef.current) {
-      managerRef.current = new AutoSaveManager(config);
-    }
+    managerRef.current ??= new AutoSaveManager(config);
 
-    managerRef.current.initialize(data, setState);
+    managerRef.current.initialize(logger, data, setState);
 
     return () => {
       managerRef.current?.destroy();
     };
-  }, []);
+  }, [config, data, logger]);
 
   React.useEffect(() => {
     if (managerRef.current) {
-      managerRef.current.updateData(data);
+      managerRef.current.updateData(logger, data);
     }
-  }, [data]);
+  }, [data, logger]);
 
   const saveDraft = React.useCallback(async (): Promise<string | null> => {
-    return managerRef.current?.saveDraft() ?? null;
-  }, []);
+    return managerRef.current?.saveDraft(logger) ?? null;
+  }, [logger]);
 
   const loadDraft = React.useCallback(
     (draftId: string): WorkshopData | null => {
-      return managerRef.current?.loadDraft(draftId) ?? null;
+      return managerRef.current?.loadDraft(logger, draftId) ?? null;
     },
-    [],
+    [logger],
   );
 
-  const deleteDraft = React.useCallback((draftId: string): void => {
-    managerRef.current?.deleteDraft(draftId);
-  }, []);
+  const deleteDraft = React.useCallback(
+    (draftId: string): void => {
+      managerRef.current?.deleteDraft(logger, draftId);
+    },
+    [logger],
+  );
 
   const updateConfig = React.useCallback(
     (newConfig: Partial<AutoSaveConfig>): void => {
-      managerRef.current?.updateConfig(newConfig);
+      managerRef.current?.updateConfig(logger, newConfig);
     },
-    [],
+    [logger],
   );
 
   return {

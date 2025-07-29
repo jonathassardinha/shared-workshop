@@ -249,20 +249,18 @@ export function logWorkshopError(
   error: WorkshopError,
   context?: Record<string, unknown>,
 ): void {
-  const logData = {
-    type: error.type,
-    message: error.message,
-    code: error.code,
-    details: error.details,
-    recoverable: error.recoverable,
-    retryable: error.retryable,
-    timestamp: error.timestamp,
-    context,
-  };
-
+  // const logData = {
+  //   type: error.type,
+  //   message: error.message,
+  //   code: error.code,
+  //   details: error.details,
+  //   recoverable: error.recoverable,
+  //   retryable: error.retryable,
+  //   timestamp: error.timestamp,
+  //   context,
+  // };
   // In a real application, you would send this to your logging service
   // Example: sendToLoggingService(logData);
-
   // For now, we'll use the logger utility
   // Logger.error("Workshop Error:", logData);
 }

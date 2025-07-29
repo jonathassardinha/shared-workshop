@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import {
   EditorProvider,
   EditorLayout,
@@ -16,12 +16,14 @@ import {
 
 interface CreateWorkshopEditorProps {
   files: Record<string, MonacoFile>;
-  onSave: () => void;
+  onSave?: () => void;
   onFilesChange: (files: Record<string, MonacoFile>) => void;
+  onDeleteFile: (filePath: string) => void;
+  onAddNewFile: (fileName: string, language: string, model: string) => void;
 }
 
-function CreateFileDialog({ onSave }: { onSave?: () => void }) {
-  const { files, setFiles } = useEditor();
+function CreateFileDialog() {
+  const { files, onAddNewFile } = useEditor();
   const [showCreateFileDialog, setShowCreateFileDialog] = useState(false);
   const [newFileName, setNewFileName] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -69,15 +71,7 @@ function CreateFileDialog({ onSave }: { onSave?: () => void }) {
       defaultContent = `// ${nameWithoutSlash}\n// New file created\n`;
     }
 
-    const newFiles = {
-      ...files,
-      [fileName]: {
-        language,
-        model: defaultContent,
-      },
-    };
-
-    setFiles(newFiles);
+    onAddNewFile?.(fileName, language, defaultContent);
     setNewFileName("");
     setShowCreateFileDialog(false);
     setError(null);
@@ -106,14 +100,7 @@ function CreateFileDialog({ onSave }: { onSave?: () => void }) {
             + New File
           </button>
         </div>
-        {onSave && (
-          <button
-            onClick={onSave}
-            className="rounded bg-blue-600 px-3 py-1 text-sm text-white hover:bg-blue-700"
-          >
-            Save Files
-          </button>
-        )}
+        <div className="text-xs text-gray-400">Auto-save enabled</div>
       </div>
 
       {showCreateFileDialog && (
@@ -167,12 +154,17 @@ export function CreateWorkshopEditor({
   files,
   onSave,
   onFilesChange,
+  onDeleteFile,
+  onAddNewFile,
 }: CreateWorkshopEditorProps) {
-  const handleDeleteFile = (filePath: string) => {
-    const newFiles = { ...files };
-    delete newFiles[filePath];
-    onFilesChange(newFiles);
-  };
+  // Enhanced file change handler with immediate auto-save
+  const handleFilesChange = useCallback(
+    (newFiles: Record<string, MonacoFile>) => {
+      // Immediately update the form state
+      onFilesChange(newFiles);
+    },
+    [onFilesChange],
+  );
 
   return (
     <EditorProvider
@@ -180,11 +172,12 @@ export function CreateWorkshopEditor({
       userRole="lecturer"
       initialFiles={files}
       onSave={onSave}
-      onFilesChange={onFilesChange}
-      onDeleteFile={handleDeleteFile}
+      onFilesChange={handleFilesChange}
+      onDeleteFile={onDeleteFile}
+      onAddNewFile={onAddNewFile}
     >
       <div className="flex h-full flex-col">
-        <CreateFileDialog onSave={onSave} />
+        <CreateFileDialog />
       </div>
     </EditorProvider>
   );

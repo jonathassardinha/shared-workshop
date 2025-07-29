@@ -34,7 +34,9 @@ export function EditorLayout() {
         }}
         className="flex w-full flex-row [&_>_*]:border [&_>_*]:border-r-0 [&_>_*]:border-gray-500 [&_>_*:last-child]:border-r"
         files={defaultFiles}
-        options={{ bundlerURL: "https://sandpack-bundler.codesandbox.io" }}
+        options={{
+          bundlerURL: "https://sandpack-bundler.codesandbox.io",
+        }}
       >
         <FileExplorer onDeleteFile={onDeleteFile} />
         <ControlledMonacoEditor />

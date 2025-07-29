@@ -1,11 +1,11 @@
 // Performance optimization utilities for workshop creation
 
-import React, { useCallback, useMemo, useRef, useEffect, useState } from "react";
+import { useCallback, useRef, useEffect, useState } from "react";
 
 // Debounce utility
-export function debounce<T extends (...args: any[]) => any>(
+export function debounce<T extends (...args: unknown[]) => unknown>(
   func: T,
-  delay: number
+  delay: number,
 ): (...args: Parameters<T>) => void {
   let timeoutId: NodeJS.Timeout;
 
@@ -16,9 +16,9 @@ export function debounce<T extends (...args: any[]) => any>(
 }
 
 // Throttle utility
-export function throttle<T extends (...args: any[]) => any>(
+export function throttle<T extends (...args: unknown[]) => unknown>(
   func: T,
-  delay: number
+  delay: number,
 ): (...args: Parameters<T>) => void {
   let lastCall = 0;
   let timeoutId: NodeJS.Timeout;
@@ -31,18 +31,21 @@ export function throttle<T extends (...args: any[]) => any>(
       func(...args);
     } else {
       clearTimeout(timeoutId);
-      timeoutId = setTimeout(() => {
-        lastCall = Date.now();
-        func(...args);
-      }, delay - (now - lastCall));
+      timeoutId = setTimeout(
+        () => {
+          lastCall = Date.now();
+          func(...args);
+        },
+        delay - (now - lastCall),
+      );
     }
   };
 }
 
 // Memoization utilities
-export function memoize<T extends (...args: any[]) => any>(
+export function memoize<T extends (...args: unknown[]) => unknown>(
   func: T,
-  keyGenerator?: (...args: Parameters<T>) => string
+  keyGenerator?: (...args: Parameters<T>) => string,
 ): T {
   const cache = new Map<string, ReturnType<T>>();
 
@@ -54,7 +57,7 @@ export function memoize<T extends (...args: any[]) => any>(
     }
 
     const result = func(...args);
-    cache.set(key, result);
+    cache.set(key, result as ReturnType<T>);
     return result;
   }) as T;
 }
@@ -81,12 +84,15 @@ export function useThrottle<T>(value: T, delay: number): T {
   const lastRun = useRef(Date.now());
 
   useEffect(() => {
-    const handler = setTimeout(() => {
-      if (Date.now() - lastRun.current >= delay) {
-        setThrottledValue(value);
-        lastRun.current = Date.now();
-      }
-    }, delay - (Date.now() - lastRun.current));
+    const handler = setTimeout(
+      () => {
+        if (Date.now() - lastRun.current >= delay) {
+          setThrottledValue(value);
+          lastRun.current = Date.now();
+        }
+      },
+      delay - (Date.now() - lastRun.current),
+    );
 
     return () => {
       clearTimeout(handler);
@@ -94,20 +100,6 @@ export function useThrottle<T>(value: T, delay: number): T {
   }, [value, delay]);
 
   return throttledValue;
-}
-
-export function useMemoizedCallback<T extends (...args: any[]) => any>(
-  callback: T,
-  deps: React.DependencyList
-): T {
-  return useCallback(callback, deps);
-}
-
-export function useMemoizedValue<T>(
-  factory: () => T,
-  deps: React.DependencyList
-): T {
-  return useMemo(factory, deps);
 }
 
 // Performance monitoring utilities
@@ -143,7 +135,10 @@ export class PerformanceMonitor {
   static getAverageRenderTime(): number {
     if (this.metrics.length === 0) return 0;
 
-    const total = this.metrics.reduce((sum, metric) => sum + metric.renderTime, 0);
+    const total = this.metrics.reduce(
+      (sum, metric) => sum + metric.renderTime,
+      0,
+    );
     return total / this.metrics.length;
   }
 
@@ -154,26 +149,6 @@ export class PerformanceMonitor {
   static clearMetrics(): void {
     this.metrics = [];
   }
-}
-
-// Component performance wrapper
-export function withPerformanceMonitoring<P extends object>(
-  Component: React.ComponentType<P>,
-  componentName: string
-): React.ComponentType<P> {
-  return React.memo((props: P) => {
-    const renderTimer = PerformanceMonitor.startTimer();
-
-    useEffect(() => {
-      const renderTime = renderTimer();
-      PerformanceMonitor.recordMetric({
-        renderTime,
-        timestamp: Date.now(),
-      });
-    });
-
-    return <Component {...props} />;
-  });
 }
 
 // File content optimization utilities
@@ -188,7 +163,7 @@ export function optimizeFileContent(content: string): string {
   // Remove trailing whitespace from lines
   optimized = optimized
     .split("\n")
-    .map(line => line.trimEnd())
+    .map((line) => line.trimEnd())
     .join("\n");
 
   return optimized;
@@ -206,7 +181,7 @@ export function chunkString(str: string, chunkSize: number): string[] {
 export function processLargeFile(
   content: string,
   processor: (chunk: string) => string,
-  chunkSize: number = 1024 * 1024 // 1MB chunks
+  chunkSize: number = 1024 * 1024, // 1MB chunks
 ): string {
   if (content.length <= chunkSize) {
     return processor(content);
@@ -217,9 +192,17 @@ export function processLargeFile(
 }
 
 // Memory usage utilities
-export function getMemoryUsage(): { used: number; total: number; percentage: number } {
+export function getMemoryUsage(): {
+  used: number;
+  total: number;
+  percentage: number;
+} {
   if (typeof performance !== "undefined" && "memory" in performance) {
-    const memory = (performance as any).memory;
+    const memory = (
+      performance as {
+        memory: { usedJSHeapSize: number; totalJSHeapSize: number };
+      }
+    ).memory;
     return {
       used: memory.usedJSHeapSize,
       total: memory.totalJSHeapSize,
@@ -231,7 +214,11 @@ export function getMemoryUsage(): { used: number; total: number; percentage: num
 }
 
 // React hook for memory monitoring
-export function useMemoryMonitor(): { used: number; total: number; percentage: number } {
+export function useMemoryMonitor(): {
+  used: number;
+  total: number;
+  percentage: number;
+} {
   const [memoryUsage, setMemoryUsage] = useState(getMemoryUsage());
 
   useEffect(() => {
@@ -254,7 +241,7 @@ export interface VirtualScrollConfig {
 
 export function useVirtualScroll<T>(
   items: T[],
-  config: VirtualScrollConfig
+  config: VirtualScrollConfig,
 ): {
   visibleItems: T[];
   startIndex: number;
@@ -270,7 +257,7 @@ export function useVirtualScroll<T>(
   const startIndex = Math.max(0, Math.floor(scrollTop / itemHeight) - overscan);
   const endIndex = Math.min(
     items.length,
-    Math.ceil((scrollTop + containerHeight) / itemHeight) + overscan
+    Math.ceil((scrollTop + containerHeight) / itemHeight) + overscan,
   );
 
   const visibleItems = items.slice(startIndex, endIndex);
@@ -288,7 +275,7 @@ export function useVirtualScroll<T>(
 // Lazy loading utilities
 export function useLazyLoad<T>(
   items: T[],
-  batchSize: number = 10
+  batchSize = 10,
 ): {
   visibleItems: T[];
   hasMore: boolean;
@@ -300,7 +287,7 @@ export function useLazyLoad<T>(
   const hasMore = visibleCount < items.length;
 
   const loadMore = useCallback(() => {
-    setVisibleCount(prev => Math.min(prev + batchSize, items.length));
+    setVisibleCount((prev) => Math.min(prev + batchSize, items.length));
   }, [batchSize, items.length]);
 
   return {
@@ -309,4 +296,3 @@ export function useLazyLoad<T>(
     loadMore,
   };
 }
-

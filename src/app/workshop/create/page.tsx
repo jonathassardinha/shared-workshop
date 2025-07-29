@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -64,6 +64,20 @@ const createWorkshopSchema = workshopDetailsSchema.merge(exercisesSchema);
 
 type CreateWorkshopFormData = z.infer<typeof createWorkshopSchema>;
 
+const InitialExercises: Exercise[] = [
+  {
+    id: "1",
+    title: "Getting Started",
+    description: "Introduction exercise",
+    files: {
+      "/App.tsx": {
+        language: "typescript",
+        model: InitialModel,
+      },
+    },
+  },
+];
+
 export default function CreateWorkshopPage() {
   const { data: session, status } = useSession();
   const [currentStep, setCurrentStep] = useState(1);
@@ -72,6 +86,7 @@ export default function CreateWorkshopPage() {
   const [error, setError] = useState<string | null>(null);
   const logger = useClientLogger();
   const router = useRouter();
+  const exercisesRef = useRef<Exercise[]>(InitialExercises);
 
   const form = useForm<CreateWorkshopFormData>({
     resolver: zodResolver(createWorkshopSchema),
@@ -79,19 +94,7 @@ export default function CreateWorkshopPage() {
     defaultValues: {
       title: "",
       description: "",
-      exercises: [
-        {
-          id: "1",
-          title: "Getting Started",
-          description: "Introduction exercise",
-          files: {
-            "/App.tsx": {
-              language: "typescript",
-              model: InitialModel,
-            },
-          },
-        },
-      ],
+      exercises: InitialExercises,
     },
   });
 
@@ -122,6 +125,7 @@ export default function CreateWorkshopPage() {
       },
     };
 
+    exercisesRef.current.push(newExercise);
     setValue("exercises", [...exercises, newExercise]);
   };
 
@@ -132,6 +136,7 @@ export default function CreateWorkshopPage() {
     }
 
     const updatedExercises = exercises.filter((_, i) => i !== index);
+    exercisesRef.current = updatedExercises;
     setValue("exercises", updatedExercises);
 
     // Adjust current exercise index if necessary
@@ -148,6 +153,7 @@ export default function CreateWorkshopPage() {
     const updatedExercises = exercises.map((exercise, i) =>
       i === index ? { ...exercise, [field]: value } : exercise,
     );
+    exercisesRef.current = updatedExercises;
     setValue("exercises", updatedExercises);
   };
 
@@ -162,6 +168,41 @@ export default function CreateWorkshopPage() {
     const updatedExercises = exercises.map((exercise, i) =>
       i === currentExerciseIndex ? { ...exercise, files: newFiles } : exercise,
     );
+    exercisesRef.current = updatedExercises;
+    // setValue("exercises", updatedExercises);
+  };
+
+  const handleExerciseIndexChange = (index: number) => {
+    setCurrentExerciseIndex(index);
+    setValue("exercises", exercisesRef.current);
+  };
+
+  const handleAddNewFile = (
+    fileName: string,
+    language: string,
+    model: string,
+  ) => {
+    const updatedExercises = exercises.map((exercise, i) =>
+      i === currentExerciseIndex
+        ? {
+            ...exercise,
+            files: { ...exercise.files, [fileName]: { language, model } },
+          }
+        : exercise,
+    );
+    exercisesRef.current = updatedExercises;
+    setValue("exercises", updatedExercises);
+  };
+
+  const handleDeleteFile = (filePath: string) => {
+    const updatedExercises = exercises.map((exercise, i) => {
+      const newFiles = { ...exercise.files };
+      delete newFiles[filePath];
+      return i === currentExerciseIndex
+        ? { ...exercise, files: newFiles }
+        : exercise;
+    });
+    exercisesRef.current = updatedExercises;
     setValue("exercises", updatedExercises);
   };
 
@@ -271,9 +312,11 @@ export default function CreateWorkshopPage() {
         <ConfigureFilesStep
           exercises={exercises}
           currentExerciseIndex={currentExerciseIndex}
-          onCurrentExerciseIndexChange={setCurrentExerciseIndex}
+          onCurrentExerciseIndexChange={handleExerciseIndexChange}
           onSaveFiles={handleSaveFiles}
           onFilesChange={handleFilesChange}
+          onAddNewFile={handleAddNewFile}
+          onDeleteFile={handleDeleteFile}
         />
       ),
     },
@@ -323,8 +366,8 @@ export default function CreateWorkshopPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-[#18181b] to-[#1b1b1c] text-white">
-      <div className="mx-auto max-w-7xl px-4 py-8">
+    <div className="grid min-h-screen items-center bg-gradient-to-b from-[#18181b] to-[#1b1b1c] text-white">
+      <div className="flex h-full max-w-[1440px] flex-col px-4 py-8">
         <StepperContext
           steps={steps}
           currentStep={currentStep}
@@ -333,7 +376,7 @@ export default function CreateWorkshopPage() {
         >
           <StepperProgress showStepNumbers={true} showConnectors={true} />
 
-          <StepperContent />
+          <StepperContent className="flex grow flex-col" />
 
           <form onSubmit={form.handleSubmit(handleCreateWorkshop)}>
             {error && (

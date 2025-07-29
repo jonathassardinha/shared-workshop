@@ -9,6 +9,8 @@ interface ConfigureFilesStepProps {
   onFilesChange: (
     newFiles: Record<string, { language: string; model: string }>,
   ) => void;
+  onAddNewFile: (fileName: string, language: string, model: string) => void;
+  onDeleteFile: (filePath: string) => void;
 }
 
 export function ConfigureFilesStep({
@@ -17,6 +19,8 @@ export function ConfigureFilesStep({
   onCurrentExerciseIndexChange,
   onSaveFiles,
   onFilesChange,
+  onAddNewFile,
+  onDeleteFile,
 }: ConfigureFilesStepProps) {
   return (
     <div className="flex grow flex-col">
@@ -44,6 +48,8 @@ export function ConfigureFilesStep({
           files={exercises[currentExerciseIndex]?.files ?? {}}
           onSave={onSaveFiles}
           onFilesChange={onFilesChange}
+          onAddNewFile={onAddNewFile}
+          onDeleteFile={onDeleteFile}
         />
       </div>
     </div>
