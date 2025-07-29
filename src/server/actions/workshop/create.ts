@@ -14,6 +14,12 @@ import {
 } from "../../../lib/validation/files";
 import { validateExerciseArray } from "../../../lib/validation/exercises";
 import { simpleCompress } from "../../../lib/files/compression";
+import {
+  classifyError,
+  createDatabaseError,
+  createValidationError,
+  createFileError,
+} from "../../../lib/errors/workshop-errors";
 
 // Type for complete workshop creation with exercises and files
 interface CreateWorkshopWithExercisesInput {
@@ -45,10 +51,11 @@ export async function createWorkshop(
     try {
       completeWorkshopSchema.parse(input);
     } catch (error) {
-      if (error instanceof Error) {
-        return { success: false, error: `Validation failed: ${error.message}` };
-      }
-      return { success: false, error: "Invalid workshop data" };
+      const workshopError = createValidationError(
+        error instanceof Error ? error.message : "Invalid workshop data",
+      );
+      ServerLogger.error("Workshop validation failed:", workshopError);
+      return { success: false, error: workshopError.message };
     }
 
     // Validate exercises array with proper structure
@@ -71,9 +78,13 @@ export async function createWorkshop(
 
     const exerciseValidation = validateExerciseArray(exercisesForValidation);
     if (!exerciseValidation.isValid) {
+      const workshopError = createValidationError(
+        `Exercise validation failed: ${exerciseValidation.errors.join(", ")}`,
+      );
+      ServerLogger.error("Exercise validation failed:", workshopError);
       return {
         success: false,
-        error: `Exercise validation failed: ${exerciseValidation.errors.join(", ")}`,
+        error: workshopError.message,
       };
     }
 
@@ -109,9 +120,11 @@ export async function createWorkshop(
             fileData.language,
           );
           if (!fileValidation.isValid) {
-            throw new Error(
+            const fileError = createFileError(
               `File validation failed for ${filename}: ${fileValidation.errors.join(", ")}`,
             );
+            ServerLogger.error("File validation failed:", fileError);
+            throw new Error(fileError.message);
           }
 
           // Sanitize and compress file content
