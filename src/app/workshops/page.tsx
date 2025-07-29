@@ -8,20 +8,9 @@ import { useSession } from "next-auth/react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { WorkshopCard } from "../../components/workshop/WorkshopCard";
 import { Pagination } from "../../components/ui/pagination";
+import { WorkshopCardSkeleton } from "../../components/ui/skeleton";
 import { useClientLogger } from "../../lib/Logger/ClientLogger";
 import { getWorkshops } from "../../server/actions/workshop/read";
-
-// Mock data removed - now using database queries
-
-function LoadingSkeleton() {
-  return (
-    <div className="animate-pulse">
-      <div className="mb-4 h-48 rounded-lg bg-gray-700"></div>
-      <div className="mb-2 h-4 rounded bg-gray-700"></div>
-      <div className="h-4 w-2/3 rounded bg-gray-700"></div>
-    </div>
-  );
-}
 
 export default function WorkshopsPage() {
   const { data: session } = useSession();
@@ -32,6 +21,7 @@ export default function WorkshopsPage() {
   // State management
   const [workshops, setWorkshops] = useState<WorkshopWithDetails[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isPageTransitioning, setIsPageTransitioning] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [totalCount, setTotalCount] = useState(0);
   const [currentPage, setCurrentPage] = useState(1);
@@ -91,6 +81,7 @@ export default function WorkshopsPage() {
   // Handle page changes
   const handlePageChange = useCallback(
     (page: number) => {
+      setIsPageTransitioning(true);
       setCurrentPage(page);
       updateURL({ page: page.toString() });
     },
@@ -157,6 +148,7 @@ export default function WorkshopsPage() {
         logger.error("Error loading workshops:", error);
       } finally {
         setIsLoading(false);
+        setIsPageTransitioning(false);
       }
     };
 
@@ -185,7 +177,7 @@ export default function WorkshopsPage() {
   // Memoize loading skeletons
   const loadingSkeletons = useMemo(() => {
     return Array.from({ length: 6 }).map((_, index) => (
-      <LoadingSkeleton key={index} />
+      <WorkshopCardSkeleton key={index} />
     ));
   }, []);
 
@@ -231,9 +223,100 @@ export default function WorkshopsPage() {
           </select>
         </div>
 
+        {/* Active filters and current state */}
+        {(searchQuery || statusFilter !== "all") && (
+          <div className="mb-4 flex flex-wrap items-center gap-2">
+            <span className="text-sm text-gray-400">Active filters:</span>
+            {searchQuery && (
+              <span className="inline-flex items-center rounded-full bg-blue-100 px-2 py-1 text-xs text-blue-800">
+                Search: &quot;{searchQuery}&quot;
+                <button
+                  onClick={() => {
+                    setSearchQuery("");
+                    updateURL({ search: "", page: "1" });
+                  }}
+                  className="ml-1 text-blue-600 hover:text-blue-800"
+                >
+                  ×
+                </button>
+              </span>
+            )}
+            {statusFilter !== "all" && (
+              <span className="inline-flex items-center rounded-full bg-green-100 px-2 py-1 text-xs text-green-800">
+                Status: {statusFilter}
+                <button
+                  onClick={() => {
+                    setStatusFilter("all");
+                    updateURL({ status: "all", page: "1" });
+                  }}
+                  className="ml-1 text-green-600 hover:text-green-800"
+                >
+                  ×
+                </button>
+              </span>
+            )}
+          </div>
+        )}
+
         {error && (
           <div className="mb-6 rounded-md border border-red-500 bg-red-500/10 p-4">
-            <p className="text-sm text-red-400">{error}</p>
+            <div className="flex items-center gap-2">
+              <svg
+                className="h-5 w-5 text-red-400"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.996-.833-2.464 0L3.34 16.5c-.77.833.192 2.5 1.732 2.5z"
+                />
+              </svg>
+              <p className="text-sm text-red-400">{error}</p>
+            </div>
+            <button
+              onClick={() => {
+                setError(null);
+                // Retry loading workshops
+                const loadWorkshops = async () => {
+                  setIsLoading(true);
+                  setError(null);
+                  try {
+                    const filter: GetWorkshopsFilter = {
+                      page: currentPage,
+                      limit: pageSize,
+                    };
+                    if (statusFilter !== "all") {
+                      filter.status = statusFilter.toUpperCase() as
+                        | "LIVE"
+                        | "PLANNED"
+                        | "COMPLETED";
+                    }
+                    if (searchQuery.trim()) {
+                      filter.search = searchQuery.trim();
+                    }
+                    const result = await getWorkshops(filter);
+                    if (result.success) {
+                      setWorkshops(result.data.workshops);
+                      setTotalCount(result.data.totalCount);
+                      setTotalPages(result.data.totalPages);
+                    } else {
+                      setError(result.error);
+                    }
+                  } catch (error) {
+                    setError("Failed to load workshops");
+                  } finally {
+                    setIsLoading(false);
+                  }
+                };
+                void loadWorkshops();
+              }}
+              className="mt-2 text-sm text-red-300 underline hover:text-red-200"
+            >
+              Try again
+            </button>
           </div>
         )}
 
@@ -259,6 +342,7 @@ export default function WorkshopsPage() {
                   onPageSizeChange={handlePageSizeChange}
                   pageSizeOptions={[10, 20, 50]}
                   showPageSizeSelector={true}
+                  isLoading={isPageTransitioning}
                 />
               </div>
             )}

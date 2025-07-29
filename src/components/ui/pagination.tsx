@@ -14,6 +14,7 @@ export interface PaginationProps {
   onPageSizeChange?: (pageSize: number) => void;
   pageSizeOptions?: number[];
   showPageSizeSelector?: boolean;
+  isLoading?: boolean;
   className?: string;
 }
 
@@ -26,6 +27,7 @@ export function Pagination({
   onPageSizeChange,
   pageSizeOptions = [10, 20, 50],
   showPageSizeSelector = true,
+  isLoading = false,
   className,
 }: PaginationProps) {
   const [pageSizeInput, setPageSizeInput] = React.useState(pageSize);
@@ -116,7 +118,7 @@ export function Pagination({
           variant="outline"
           size="sm"
           onClick={() => onPageChange(currentPage - 1)}
-          disabled={currentPage <= 1}
+          disabled={currentPage <= 1 || isLoading}
           className="h-8 w-8 p-0"
         >
           <ChevronLeft className="h-4 w-4" />
@@ -140,6 +142,7 @@ export function Pagination({
                 variant={currentPage === page ? "default" : "outline"}
                 size="sm"
                 onClick={() => onPageChange(page as number)}
+                disabled={isLoading}
                 className="h-8 w-8 p-0"
               >
                 {page}
@@ -153,7 +156,7 @@ export function Pagination({
           variant="outline"
           size="sm"
           onClick={() => onPageChange(currentPage + 1)}
-          disabled={currentPage >= totalPages}
+          disabled={currentPage >= totalPages || isLoading}
           className="h-8 w-8 p-0"
         >
           <ChevronRight className="h-4 w-4" />
