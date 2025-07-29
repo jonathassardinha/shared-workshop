@@ -7,6 +7,13 @@ import { revalidatePath } from "next/cache";
 import { ServerLogger } from "@/lib/Logger/ServerLogger";
 import { auth } from "../../auth";
 import { db } from "../../db";
+import { completeWorkshopSchema } from "../../../lib/validation/workshop";
+import {
+  validateCompleteFile,
+  sanitizeFileContent,
+} from "../../../lib/validation/files";
+import { validateExerciseArray } from "../../../lib/validation/exercises";
+import { simpleCompress } from "../../../lib/files/compression";
 
 // Type for complete workshop creation with exercises and files
 interface CreateWorkshopWithExercisesInput {
@@ -34,6 +41,42 @@ export async function createWorkshop(
       return { success: false, error: "Authentication required" };
     }
 
+    // Validate input with enhanced validation
+    try {
+      completeWorkshopSchema.parse(input);
+    } catch (error) {
+      if (error instanceof Error) {
+        return { success: false, error: `Validation failed: ${error.message}` };
+      }
+      return { success: false, error: "Invalid workshop data" };
+    }
+
+    // Validate exercises array with proper structure
+    const exercisesForValidation = input.exercises.map((exercise, index) => ({
+      id: `temp-${index}`,
+      title: exercise.title,
+      description: exercise.description,
+      order: exercise.order,
+      files: Object.entries(exercise.files).reduce(
+        (acc, [filename, fileData]) => {
+          acc[filename] = {
+            language: fileData.language,
+            model: fileData.content,
+          };
+          return acc;
+        },
+        {} as Record<string, { language: string; model: string }>,
+      ),
+    }));
+
+    const exerciseValidation = validateExerciseArray(exercisesForValidation);
+    if (!exerciseValidation.isValid) {
+      return {
+        success: false,
+        error: `Exercise validation failed: ${exerciseValidation.errors.join(", ")}`,
+      };
+    }
+
     // Create everything in a transaction to ensure consistency
     const result = await db.$transaction(async (tx) => {
       // 1. Create the workshop
@@ -57,12 +100,28 @@ export async function createWorkshop(
           },
         });
 
-        // 3. Create files for this exercise
+        // 3. Create files for this exercise with validation and compression
         for (const [filename, fileData] of Object.entries(exerciseData.files)) {
+          // Validate file content
+          const fileValidation = validateCompleteFile(
+            filename,
+            fileData.content,
+            fileData.language,
+          );
+          if (!fileValidation.isValid) {
+            throw new Error(
+              `File validation failed for ${filename}: ${fileValidation.errors.join(", ")}`,
+            );
+          }
+
+          // Sanitize and compress file content
+          const sanitizedContent = sanitizeFileContent(fileData.content);
+          const compressedResult = simpleCompress(sanitizedContent);
+
           await tx.workshopFile.create({
             data: {
               filename,
-              content: fileData.content,
+              content: compressedResult.content,
               language: fileData.language,
               exerciseId: exercise.id,
             },
